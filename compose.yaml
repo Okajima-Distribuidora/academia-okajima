@@ -1,0 +1,28 @@
+name: academia-okajima-dev
+
+services:
+  banco:
+    # Compatibilidade com o legado. MySQL 5.7 deve ser usado apenas localmente.
+    image: mysql:5.7.44
+    restart: unless-stopped
+    env_file:
+      - .env.docker.local
+    command:
+      - --lower-case-table-names=1
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_unicode_ci
+    ports:
+      - "127.0.0.1:3307:3306"
+    volumes:
+      - banco_dados:/var/lib/mysql
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'MYSQL_PWD="$${MYSQL_PASSWORD}" mysql --protocol=TCP -h 127.0.0.1 -u "$${MYSQL_USER}" "$${MYSQL_DATABASE}" -Nse "SELECT 1" >/dev/null'
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  banco_dados:
