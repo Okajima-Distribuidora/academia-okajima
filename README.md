@@ -67,6 +67,7 @@ npx shadcn@latest add @shadcn/input
 
 ## Documentação do projeto
 
+- [Roadmap de caminhos e migração do legado](docs/roadmap-migracao-legado.md)
 - [Home — estrutura inicial](docs/home.md)
 - [Login local implementado: fluxo, limites e testes](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/login-local.md)
 - [Banco de desenvolvimento local](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/banco-local.md)
