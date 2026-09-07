@@ -1,13 +1,16 @@
 import "server-only";
 
 import { getDb } from "@/lib/db";
-import { decodeLegacyText } from "@/lib/home/catalog";
+import { decodeLegacyText, extractVimeoId } from "@/lib/home/catalog";
+import { getVimeoVideoPresentation } from "@/lib/vimeo/videos";
 
 type StudioVideoRow = {
   id: number;
   title: string;
   time: number;
   views: number;
+  vimeo: string;
+  video_location: string;
 };
 
 export interface StudioStats {
@@ -17,12 +20,14 @@ export interface StudioStats {
     likes: number;
     comments: number;
     averageViewMinutes: number;
+    thumbnailUrl: string | null;
   } | null;
   summary: {
     views: number;
     watchHours: number;
     totalVideos: number;
     mostViewedVideoTitle: string | null;
+    mostViewedVideoViews: number;
   };
 }
 
@@ -41,7 +46,7 @@ export function formatStudioDecimal(value: number): string {
 
 async function listStudioVideos(): Promise<StudioVideoRow[]> {
   return getDb().selectFrom("videos")
-    .select(["id", "title", "time", "views"])
+    .select(["id", "title", "time", "views", "vimeo", "video_location"])
     .where("converted", "!=", 2)
     .where("privacy", "=", 0)
     .where("is_movie", "=", 0)
@@ -54,6 +59,8 @@ export async function getStudioStats(): Promise<StudioStats> {
   const videos = await listStudioVideos();
   const latestVideo = [...videos].sort((a, b) => b.time - a.time || b.id - a.id)[0] ?? null;
   const mostViewedVideo = [...videos].sort((a, b) => b.views - a.views || b.time - a.time || b.id - a.id)[0] ?? null;
+  const latestVimeoId = latestVideo ? extractVimeoId(latestVideo.vimeo, latestVideo.video_location) : null;
+  const latestVimeo = latestVimeoId ? await getVimeoVideoPresentation(latestVimeoId) : null;
 
   return {
     latestVideo: latestVideo
@@ -63,6 +70,7 @@ export async function getStudioStats(): Promise<StudioStats> {
         likes: 0,
         comments: 0,
         averageViewMinutes: 0,
+        thumbnailUrl: latestVimeo?.thumbnailUrl ?? null,
       }
       : null,
     summary: {
@@ -70,6 +78,7 @@ export async function getStudioStats(): Promise<StudioStats> {
       watchHours: 0,
       totalVideos: videos.length,
       mostViewedVideoTitle: mostViewedVideo ? decodeLegacyText(mostViewedVideo.title.trim()) : null,
+      mostViewedVideoViews: mostViewedVideo?.views ?? 0,
     },
   };
 }
