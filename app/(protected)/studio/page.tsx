@@ -2,13 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import {
   IconChartBar,
-  IconChevronRight,
   IconChevronUp,
   IconClockHour4,
   IconHeart,
   IconEye,
   IconMessageCircle,
-  IconPlayerPlay,
+  IconTrophy,
   IconVideo,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -77,10 +76,23 @@ export default async function StudioPage() {
             <Separator />
 
             <div className="flex flex-col gap-3">
-              <StudioStatRow label="Visualizações" value={formatStudioNumber(stats.latestVideo?.views ?? 0)} />
-              <StudioStatRow label="Curtidas" value={formatStudioNumber(stats.latestVideo?.likes ?? 0)} />
-              <StudioStatRow label="Comentários" value={formatStudioNumber(stats.latestVideo?.comments ?? 0)} />
               <StudioStatRow
+                icon={IconEye}
+                label="Visualizações"
+                value={formatStudioNumber(stats.latestVideo?.views ?? 0)}
+              />
+              <StudioStatRow
+                icon={IconHeart}
+                label="Curtidas"
+                value={formatStudioNumber(stats.latestVideo?.likes ?? 0)}
+              />
+              <StudioStatRow
+                icon={IconMessageCircle}
+                label="Comentários"
+                value={formatStudioNumber(stats.latestVideo?.comments ?? 0)}
+              />
+              <StudioStatRow
+                icon={IconClockHour4}
                 label="Duração média de visualização"
                 value={`${formatStudioDecimal(stats.latestVideo?.averageViewMinutes ?? 0)} min`}
               />
@@ -114,16 +126,24 @@ export default async function StudioPage() {
 
             <Separator />
 
-            <section className="flex flex-col gap-3" aria-labelledby="studio-most-viewed-title">
+            <section className="flex flex-col gap-3" aria-labelledby="studio-top-videos-title">
               <div>
-                <h2 id="studio-most-viewed-title" className="font-semibold">Vídeo mais visto</h2>
-                <p className="text-sm text-muted-foreground">Conteúdo com maior número de visualizações</p>
+                <h2 id="studio-top-videos-title" className="font-semibold">Top vídeos</h2>
+                <p className="text-sm text-muted-foreground">5 conteúdos com mais visualizações</p>
               </div>
               <div className="flex flex-col gap-2">
-                <StudioContentRow
-                  title={stats.summary.mostViewedVideoTitle ?? "Nenhum vídeo publicado pelo Studio ainda."}
-                  value={formatStudioNumber(stats.summary.mostViewedVideoViews)}
-                />
+                {stats.summary.topVideos.length > 0 ? (
+                  stats.summary.topVideos.map((video, index) => (
+                    <StudioContentRow
+                      key={video.id}
+                      index={index + 1}
+                      title={video.title}
+                      value={formatStudioNumber(video.views)}
+                    />
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground">Nenhum vídeo publicado pelo Studio ainda.</p>
+                )}
               </div>
             </section>
 
@@ -151,13 +171,16 @@ function StudioStatRow({
     {Icon ? <Icon className="shrink-0 text-muted-foreground" aria-hidden="true" stroke={1.8} /> : null}
     <span className="min-w-0 flex-1 text-muted-foreground">{label}</span>
     <span className="shrink-0 font-semibold">{value}</span>
-    <IconChevronRight className="shrink-0 text-muted-foreground" aria-hidden="true" stroke={1.8} />
   </div>;
 }
 
-function StudioContentRow({ title, value }: { title: string; value: string }) {
+function StudioContentRow({ index, title, value }: { index: number; title: string; value: string }) {
   return <div className="flex min-w-0 items-center gap-3 text-sm">
-    <IconPlayerPlay className="shrink-0 text-muted-foreground" aria-hidden="true" stroke={1.8} />
+    {index === 1 ? (
+      <IconTrophy className="shrink-0 text-muted-foreground" aria-hidden="true" stroke={1.8} />
+    ) : (
+      <span className="w-[1.125rem] shrink-0 text-center text-xs font-semibold text-muted-foreground">{index}</span>
+    )}
     <span className="min-w-0 flex-1 truncate">{title}</span>
     <span className="shrink-0 font-semibold">{value}</span>
   </div>;

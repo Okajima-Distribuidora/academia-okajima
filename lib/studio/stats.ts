@@ -26,8 +26,11 @@ export interface StudioStats {
     views: number;
     watchHours: number;
     totalVideos: number;
-    mostViewedVideoTitle: string | null;
-    mostViewedVideoViews: number;
+    topVideos: Array<{
+      id: number;
+      title: string;
+      views: number;
+    }>;
   };
 }
 
@@ -58,7 +61,14 @@ async function listStudioVideos(): Promise<StudioVideoRow[]> {
 export async function getStudioStats(): Promise<StudioStats> {
   const videos = await listStudioVideos();
   const latestVideo = [...videos].sort((a, b) => b.time - a.time || b.id - a.id)[0] ?? null;
-  const mostViewedVideo = [...videos].sort((a, b) => b.views - a.views || b.time - a.time || b.id - a.id)[0] ?? null;
+  const topVideos = [...videos]
+    .sort((a, b) => b.views - a.views || b.time - a.time || b.id - a.id)
+    .slice(0, 5)
+    .map((video) => ({
+      id: video.id,
+      title: decodeLegacyText(video.title.trim()),
+      views: video.views,
+    }));
   const latestVimeoId = latestVideo ? extractVimeoId(latestVideo.vimeo, latestVideo.video_location) : null;
   const latestVimeo = latestVimeoId ? await getVimeoVideoPresentation(latestVimeoId) : null;
 
@@ -77,8 +87,7 @@ export async function getStudioStats(): Promise<StudioStats> {
       views: videos.reduce((total, video) => total + Math.max(0, video.views), 0),
       watchHours: 0,
       totalVideos: videos.length,
-      mostViewedVideoTitle: mostViewedVideo ? decodeLegacyText(mostViewedVideo.title.trim()) : null,
-      mostViewedVideoViews: mostViewedVideo?.views ?? 0,
+      topVideos,
     },
   };
 }
