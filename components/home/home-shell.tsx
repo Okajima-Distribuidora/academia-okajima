@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { IconMenu2, IconSearch, IconUpload, IconVideoPlus } from "@tabler/icons-react";
+import { IconMenu2, IconPlus, IconSearch, IconUpload } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -78,7 +78,7 @@ function HomeTopbar({ name, rca }: { name: string; rca: string }) {
             render={<Button variant="outline-transparent" className="home-studio-link size-8 rounded-full p-0 sm:h-9 sm:w-auto sm:gap-2 sm:px-3" />}
             aria-label="Criar conteúdo"
           >
-            <IconVideoPlus data-icon="inline-start" aria-hidden="true" />
+            <IconPlus data-icon="inline-start" aria-hidden="true" />
             <span className="hidden sm:inline">Criar</span>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" sideOffset={8} className="w-52">
