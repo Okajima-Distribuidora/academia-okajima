@@ -18,6 +18,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { StudioSidebar } from "@/components/studio/studio-sidebar";
 import { HomeSidebar } from "./home-sidebar";
 import { HomeSearch } from "./home-search";
 import { UserMenu } from "./user-menu";
@@ -103,12 +104,15 @@ function HomeTopbar({ name, rca }: { name: string; rca: string }) {
 }
 
 export function HomeShell({ children, name, rca }: { children: ReactNode; name: string; rca: string }) {
+  const pathname = usePathname();
+  const isStudio = pathname.startsWith("/studio");
+
   return <TooltipProvider delay={200}>
     <SidebarProvider className="home-shell flex-col" style={{ "--sidebar-width": "15rem", "--sidebar-width-icon": "4.5rem" } as CSSProperties}>
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:p-3 focus:text-primary">Pular para o conteúdo</a>
       <HomeTopbar name={name} rca={rca} />
       <div className="flex min-w-0 flex-1">
-        <HomeSidebar />
+        {isStudio ? <StudioSidebar /> : <HomeSidebar />}
         <div className="flex min-w-0 flex-1 flex-col">{children}</div>
       </div>
     </SidebarProvider>
