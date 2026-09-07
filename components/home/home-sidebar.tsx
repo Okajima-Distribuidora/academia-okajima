@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import {
   IconBrandSupabase ,
   IconFile,
@@ -27,13 +27,14 @@ const navigation = homeSections.map((section, index) => ({
 
 export function HomeSidebar() {
   const params = useSearchParams();
+  const pathname = usePathname();
   const active = getHomeSection(params.get("secao"));
   const searching = !!normalizeHomeSearch(params.get("q"));
   const { isMobile, setOpenMobile } = useSidebar();
 
   function item(section: (typeof navigation)[number]) {
     const Icon = section.icon;
-    const selected = !searching && active.id === section.id;
+    const selected = pathname === "/" && !searching && active.id === section.id;
     return <SidebarMenuItem key={section.id}>
       <SidebarMenuButton
         render={<Link href={homeSectionHref(section.id)} />}

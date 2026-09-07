@@ -495,7 +495,7 @@
   @media (min-width: 768px) {
     .home-topbar {
       height: 3.75rem;
-      grid-template-columns: minmax(12.5rem, 1fr) minmax(0, 40rem) minmax(12.5rem, 1fr);
+      grid-template-columns: minmax(15.5rem, 1fr) minmax(0, 40rem) minmax(15.5rem, 1fr);
       gap: 1.5rem;
       padding: 0 1.25rem;
     }
@@ -528,6 +528,9 @@
     }
     .home-recent-heading { margin-bottom: 0.875rem; }
     .home-recent-track { grid-auto-columns: min(20.4rem, 93.6vw); gap: 0.625rem; }
+  }
+  @media (width < 400px) {
+    .home-topbar-brand > a { width: 6rem; }
   }
   @media (prefers-reduced-motion: reduce) {
     .home-shell [data-slot="sidebar-gap"],
