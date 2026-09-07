@@ -30,6 +30,7 @@ export interface StudioStats {
       id: number;
       title: string;
       views: number;
+      thumbnailUrl: string | null;
     }>;
   };
 }
@@ -61,14 +62,20 @@ async function listStudioVideos(): Promise<StudioVideoRow[]> {
 export async function getStudioStats(): Promise<StudioStats> {
   const videos = await listStudioVideos();
   const latestVideo = [...videos].sort((a, b) => b.time - a.time || b.id - a.id)[0] ?? null;
-  const topVideos = [...videos]
+  const topVideoRows = [...videos]
     .sort((a, b) => b.views - a.views || b.time - a.time || b.id - a.id)
-    .slice(0, 5)
-    .map((video) => ({
+    .slice(0, 5);
+  const topVideos = await Promise.all(topVideoRows.map(async (video) => {
+    const vimeoId = extractVimeoId(video.vimeo, video.video_location);
+    const vimeo = vimeoId ? await getVimeoVideoPresentation(vimeoId) : null;
+
+    return {
       id: video.id,
       title: decodeLegacyText(video.title.trim()),
       views: video.views,
-    }));
+      thumbnailUrl: vimeo?.thumbnailUrl ?? null,
+    };
+  }));
   const latestVimeoId = latestVideo ? extractVimeoId(latestVideo.vimeo, latestVideo.video_location) : null;
   const latestVimeo = latestVimeoId ? await getVimeoVideoPresentation(latestVimeoId) : null;
 
