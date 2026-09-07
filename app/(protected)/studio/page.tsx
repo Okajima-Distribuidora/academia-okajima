@@ -4,13 +4,11 @@ import {
   IconChartBar,
   IconClockHour4,
   IconEye,
-  IconSparkles,
-  IconUpload,
   IconUsers,
   IconVideo,
 } from "@tabler/icons-react";
-import studioIcon from "@/app/icon.png";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import metricsEmptyDark from "@/public/illustrations/metrics-empty-dark.png";
+import metricsEmptyLight from "@/public/illustrations/metrics-empty-light.png";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -25,50 +23,37 @@ import { requireUser } from "@/lib/auth/session";
 export const metadata: Metadata = { title: "Academia Studio" };
 
 export default async function StudioPage() {
-  const user = await requireUser();
-  const nameParts = (user.name.trim() || user.codigorca.trim()).split(/\s+/);
-  const initials = [nameParts[0], nameParts.length > 1 ? nameParts.at(-1) : undefined]
-    .map((part) => Array.from(part ?? "")[0] ?? "")
-    .join("")
-    .toUpperCase() || "U";
+  await requireUser();
 
   return <main id="conteudo" tabIndex={-1} className="home-content flex flex-1 flex-col bg-soft outline-none">
-    <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-7 px-5 py-6 sm:px-8 lg:py-10">
-      <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex min-w-0 items-center gap-4">
-          <Avatar className="size-20 sm:size-24" aria-hidden="true">
-            <AvatarFallback className="bg-primary text-3xl text-primary-foreground sm:text-4xl">{initials}</AvatarFallback>
-          </Avatar>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-muted-foreground">Seu canal</p>
-            <h1 className="truncate text-3xl font-semibold tracking-tight sm:text-4xl">Painel do canal</h1>
-            <p className="truncate text-sm text-muted-foreground">{user.name}</p>
-          </div>
-        </div>
-        <Button variant="outline">
-          <IconSparkles data-icon="inline-start" aria-hidden="true" />
-          Pergunte ao Studio
-        </Button>
-      </div>
-
+    <section className="mx-auto flex w-full max-w-6xl flex-1 flex-col gap-5 px-5 py-6 sm:px-8 lg:py-10">
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(20rem,0.82fr)]">
         <Card className="min-h-[29rem]">
           <CardHeader>
-            <CardTitle>Comece publicando seu próximo vídeo</CardTitle>
-            <CardDescription>O fluxo de upload vai entrar aqui. Por enquanto, este painel prepara a área do Studio.</CardDescription>
+            <CardTitle>Ainda não temos métricas para mostrar</CardTitle>
+            <CardDescription>Quando os vídeos tiverem dados consolidados, o resumo do desempenho aparece aqui.</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-            <div className="grid size-36 place-items-center rounded-full bg-muted">
-              <Image src={studioIcon} alt="" width={88} height={88} className="object-contain" priority />
-            </div>
+            <Image
+              src={metricsEmptyLight}
+              alt=""
+              width={280}
+              height={210}
+              className="w-full max-w-72 object-contain dark:hidden"
+              priority
+            />
+            <Image
+              src={metricsEmptyDark}
+              alt=""
+              width={280}
+              height={210}
+              className="hidden w-full max-w-72 object-contain dark:block"
+              priority
+            />
             <div className="flex max-w-sm flex-col gap-2">
-              <p className="text-base font-medium">Quer ver as métricas do seu último vídeo?</p>
-              <p className="text-sm text-muted-foreground">Para começar, envie e publique um vídeo pela Academia Studio.</p>
+              <p className="text-base font-medium">Sem métricas por enquanto</p>
+              <p className="text-sm text-muted-foreground">Assim que houver dados suficientes, este painel passa a exibir visualizações, tempo de exibição e desempenho dos conteúdos.</p>
             </div>
-            <Button>
-              <IconUpload data-icon="inline-start" aria-hidden="true" />
-              Enviar vídeos
-            </Button>
           </CardContent>
         </Card>
 
