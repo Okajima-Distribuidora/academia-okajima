@@ -7,7 +7,6 @@ import {
   IconHeart,
   IconEye,
   IconMessageCircle,
-  IconTrophy,
   IconVideo,
 } from "@tabler/icons-react";
 import { Button } from "@/components/ui/button";
@@ -176,11 +175,7 @@ function StudioStatRow({
 
 function StudioContentRow({ index, title, value }: { index: number; title: string; value: string }) {
   return <div className="flex min-w-0 items-center gap-3 text-sm">
-    {index === 1 ? (
-      <IconTrophy className="shrink-0 text-muted-foreground" aria-hidden="true" stroke={1.8} />
-    ) : (
-      <span className="w-[1.125rem] shrink-0 text-center text-xs font-semibold text-muted-foreground">{index}</span>
-    )}
+    <span className="w-[1.125rem] shrink-0 text-center text-xs font-semibold text-muted-foreground">{index}</span>
     <span className="min-w-0 flex-1 truncate">{title}</span>
     <span className="shrink-0 font-semibold">{value}</span>
   </div>;
