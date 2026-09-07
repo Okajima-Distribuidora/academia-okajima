@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
-import { IconMenu2, IconSearch } from "@tabler/icons-react";
+import { IconMenu2, IconSearch, IconUpload, IconVideoPlus } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -9,6 +9,13 @@ import studioIcon from "@/app/icon.png";
 import { cn } from "@/lib/utils";
 import { Brand } from "@/components/brand";
 import { Button, buttonVariants } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { HomeSidebar } from "./home-sidebar";
@@ -27,6 +34,7 @@ function MenuToggle() {
 
 function HomeTopbar({ name, rca }: { name: string; rca: string }) {
   const pathname = usePathname();
+  const isStudio = pathname.startsWith("/studio");
   const [searchOpen, setSearchOpen] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const searchTriggerRef = useRef<HTMLButtonElement>(null);
@@ -63,12 +71,32 @@ function HomeTopbar({ name, rca }: { name: string; rca: string }) {
         aria-controls="home-topbar-search" aria-expanded={searchOpen} onClick={() => setSearchOpen((open) => !open)}>
         <IconSearch aria-hidden="true" stroke={1.7} />
       </Button>
-      <Link href="/studio" aria-label="Academia Studio" title="Academia Studio"
-        aria-current={pathname === "/studio" ? "page" : undefined}
-        className={cn(buttonVariants({ variant: "outline-transparent" }), "home-studio-link size-8 rounded-full p-0 sm:h-9 sm:w-auto sm:gap-2 sm:px-3")}>
-        <Image src={studioIcon} alt="" width={22} height={22} className="size-5 shrink-0 object-contain sm:size-[22px]" />
-        <span className="hidden sm:inline">Academia Studio</span>
-      </Link>
+      {isStudio ? (
+        <DropdownMenu>
+          <DropdownMenuTrigger
+            render={<Button variant="outline-transparent" className="home-studio-link size-8 rounded-full p-0 sm:h-9 sm:w-auto sm:gap-2 sm:px-3" />}
+            aria-label="Criar conteúdo"
+          >
+            <IconVideoPlus data-icon="inline-start" aria-hidden="true" />
+            <span className="hidden sm:inline">Criar</span>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" sideOffset={8} className="w-52">
+            <DropdownMenuGroup>
+              <DropdownMenuItem>
+                <IconUpload aria-hidden="true" />
+                Upload de vídeos
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      ) : (
+        <Link href="/studio" aria-label="Academia Studio" title="Academia Studio"
+          aria-current={pathname === "/studio" ? "page" : undefined}
+          className={cn(buttonVariants({ variant: "outline-transparent" }), "home-studio-link size-8 rounded-full p-0 sm:h-9 sm:w-auto sm:gap-2 sm:px-3")}>
+          <Image src={studioIcon} alt="" width={22} height={22} className="size-5 shrink-0 object-contain sm:size-[22px]" />
+          <span className="hidden sm:inline">Academia Studio</span>
+        </Link>
+      )}
       <UserMenu name={name} rca={rca} />
     </div>
   </header>;
