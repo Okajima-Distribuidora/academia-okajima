@@ -442,6 +442,20 @@
     .home-recent-card:not(:disabled):hover .home-recent-image { filter: brightness(0.78); transform: scale(1.035); }
     .home-recent-card:not(:disabled):hover .home-recent-play { opacity: 1; transform: translate(-50%, -50%); }
   }
+  .recent-videos-page {
+    background: var(--background);
+  }
+  .recent-videos-page > header svg {
+    width: 1.5rem;
+    height: 1.5rem;
+    color: var(--primary);
+  }
+  .recent-videos-page-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 1fr));
+    gap: 2rem 1rem;
+    list-style: none;
+  }
   .home-search [data-slot="button"],
   .home-search-trigger {
     background: color-mix(in srgb, var(--foreground) 6%, var(--secondary));

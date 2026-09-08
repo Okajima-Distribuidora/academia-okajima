@@ -1,7 +1,7 @@
 import { requireUser } from "@/lib/auth/session";
 import type { Metadata } from "next";
 import { HomeContent } from "@/components/home/home-content";
-import { getHomeCatalog } from "@/lib/home/catalog";
+import { getHomeCatalog, getRecentVideosPage, normalizeRecentVideosPage } from "@/lib/home/catalog";
 import { getHomeSection, normalizeHomeSearch } from "@/lib/home/navigation";
 
 export const metadata: Metadata = { title: "Início" };
@@ -12,9 +12,13 @@ export default async function HomePage({ searchParams }: PageProps<"/">) {
   const section = getHomeSection(Array.isArray(params.secao) ? params.secao[0] : params.secao);
   const query = normalizeHomeSearch(Array.isArray(params.q) ? params.q[0] : params.q);
   const requestedCategory = Array.isArray(params.categoria) ? params.categoria[0] : params.categoria;
+  const requestedPage = normalizeRecentVideosPage(Array.isArray(params.pagina) ? params.pagina[0] : params.pagina);
   const catalog = !query && section.id === "home"
     ? await getHomeCatalog(requestedCategory ?? null)
     : null;
+  const recentVideosPage = !query && section.id === "recentes"
+    ? await getRecentVideosPage(requestedPage)
+    : null;
 
-  return <HomeContent section={section} query={query} catalog={catalog} />;
+  return <HomeContent section={section} query={query} catalog={catalog} recentVideosPage={recentVideosPage} />;
 }
