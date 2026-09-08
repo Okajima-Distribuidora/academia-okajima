@@ -1,7 +1,13 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { decodeLegacyText, extractVimeoId, formatPublishedAt, formatViews } from "../../lib/home/catalog";
+import {
+  decodeLegacyText,
+  extractVimeoId,
+  formatPublishedAt,
+  formatViews,
+  normalizeRecentVideosPage,
+} from "../../lib/home/catalog";
 
 test("home: identifica vídeos Vimeo nos dois formatos usados pelo legado", () => {
   assert.equal(extractVimeoId("1131716018", ""), "1131716018");
@@ -10,6 +16,16 @@ test("home: identifica vídeos Vimeo nos dois formatos usados pelo legado", () =
     "1131716018",
   );
   assert.equal(extractVimeoId("", "https://player.vimeo.com/video/1131716018?autoplay=1"), "1131716018");
+});
+
+test("home: normaliza a página de vídeos recentes", () => {
+  assert.equal(normalizeRecentVideosPage(undefined), 1);
+  assert.equal(normalizeRecentVideosPage(""), 1);
+  assert.equal(normalizeRecentVideosPage("0"), 1);
+  assert.equal(normalizeRecentVideosPage("-2"), 1);
+  assert.equal(normalizeRecentVideosPage("2.5"), 1);
+  assert.equal(normalizeRecentVideosPage("3"), 3);
+  assert.equal(normalizeRecentVideosPage("999999999999999999999"), 1);
 });
 
 test("home: recusa fontes externas e valores Vimeo malformados", () => {
