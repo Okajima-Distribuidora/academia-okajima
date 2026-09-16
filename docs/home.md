@@ -40,7 +40,7 @@ rankings ou alteração do banco.
 - Busca usa `/?q=...`, com trim e limite de 120 caracteres; o texto é renderizado pelo React, nunca como HTML. Não há histórico salvo ou requisição ao Vimeo.
 - Estado de recolhimento fica em memória enquanto o layout está montado; recarregar a página volta ao menu expandido. O cookie genérico do componente original não é gravado.
 - Configurações é apenas uma posição reservada. O botão Sair encerra a sessão e volta ao login.
-- Tema: Claro continua sendo o padrão inicial. A preferência é salva pelo `next-themes` na mesma chave `academia-okajima-theme`; Sistema acompanha `prefers-color-scheme` do dispositivo. Trocar de tema não fecha o menu, e clicar na opção ativa não remove a seleção. O controle binário da tela de login foi preservado.
+- Tema: Claro continua sendo o padrão inicial. A preferência é salva na chave `academia-okajima-theme`; Sistema acompanha `prefers-color-scheme` do dispositivo. Trocar de tema não fecha o menu, e clicar na opção ativa não remove a seleção. O controle binário da tela de login foi preservado.
 - Ícones novos usam `@tabler/icons-react`; ícones antigos não relacionados não foram migrados.
 
 ## Paleta compartilhada
