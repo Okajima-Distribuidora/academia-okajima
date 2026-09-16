@@ -51,6 +51,8 @@ export async function getModuleProgress({
     .where("videos.is_movie", "=", 0)
     .where("videos.live_time", "=", 0)
     .where("videos.approved", "=", 1)
+    .where("videos.upload_status", "=", "ready")
+    .where("videos.deleted_at", "is", null)
     .where("videos.is_short", "=", 0)
     .executeTakeFirst();
 

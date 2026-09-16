@@ -38,6 +38,8 @@ export async function POST(request: Request) {
     .where("is_movie", "=", 0)
     .where("live_time", "=", 0)
     .where("approved", "=", 1)
+    .where("upload_status", "=", "ready")
+    .where("deleted_at", "is", null)
     .where("is_short", "=", 0)
     .executeTakeFirst();
   if (!video) {
