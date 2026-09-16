@@ -1,0 +1,59 @@
+import type { Metadata } from "next";
+import { notFound } from "next/navigation";
+
+import { VideoWatchContent } from "@/components/home/video-watch-content";
+import { requireUser } from "@/lib/auth/session";
+import {
+  getVideoWatchPage,
+  normalizeCategoryRoute,
+  normalizeVimeoWatchId,
+} from "@/lib/home/catalog";
+import { getVideoProgress } from "@/lib/home/video-progress";
+
+export async function generateMetadata({
+  params,
+  searchParams,
+}: PageProps<"/[categoryRoute]/watch">): Promise<Metadata> {
+  const [{ categoryRoute }, query] = await Promise.all([params, searchParams]);
+  const categorySlug = normalizeCategoryRoute(categoryRoute);
+  const vimeoId = normalizeVimeoWatchId(
+    Array.isArray(query.v) ? query.v[0] : query.v,
+  );
+
+  if (!categorySlug || !vimeoId) return { title: "Vídeo" };
+
+  const page = await getVideoWatchPage(categorySlug, vimeoId);
+  return { title: page?.video.title ?? "Vídeo" };
+}
+
+export default async function VideoWatchRoute({
+  params,
+  searchParams,
+}: PageProps<"/[categoryRoute]/watch">) {
+  const [{ categoryRoute }, query] = await Promise.all([params, searchParams]);
+  const categorySlug = normalizeCategoryRoute(categoryRoute);
+  const vimeoId = normalizeVimeoWatchId(
+    Array.isArray(query.v) ? query.v[0] : query.v,
+  );
+  if (!categorySlug || !vimeoId) notFound();
+
+  const [page, user] = await Promise.all([
+    getVideoWatchPage(categorySlug, vimeoId),
+    requireUser(),
+  ]);
+  if (!page) notFound();
+
+  const progress = await getVideoProgress({
+    userId: Number(user.id),
+    videoId: page.video.id,
+  });
+
+  return (
+    <VideoWatchContent
+      page={page}
+      viewer={{ name: user.name, rca: user.codigorca }}
+      resumePositionSeconds={progress?.resumePositionSeconds ?? 0}
+      isStudioAdmin={user.isStudioAdmin}
+    />
+  );
+}

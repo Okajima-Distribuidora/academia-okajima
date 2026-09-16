@@ -1,6 +1,7 @@
-import Image from "next/image";
 import { IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import Image from "next/image";
 
+import { VideoHoverPreview } from "@/components/home/video-hover-preview";
 import type { RecentVideo } from "@/lib/home/catalog";
 
 export function RecentVideoCardContent({
@@ -25,17 +26,26 @@ export function RecentVideoCardContent({
             className="home-recent-image object-cover"
           />
         ) : (
-          <IconVideo className="home-recent-placeholder-icon" aria-hidden="true" stroke={1.4} />
+          <IconVideo
+            className="home-recent-placeholder-icon"
+            aria-hidden="true"
+            stroke={1.4}
+          />
         )}
+        <VideoHoverPreview title={video.title} vimeoId={video.vimeoId} />
         <span className="home-recent-play" aria-hidden="true">
           <IconPlayerPlayFilled />
         </span>
-        {video.duration ? <span className="home-recent-duration">{video.duration}</span> : null}
+        {video.duration ? (
+          <span className="home-recent-duration">{video.duration}</span>
+        ) : null}
       </span>
       <span className="home-recent-copy">
         <strong>{video.title}</strong>
         <span>{video.categoryLabel ?? "Academia Okajima"}</span>
-        <span>{video.viewsLabel} · {video.publishedLabel}</span>
+        <span>
+          {video.viewsLabel} · {video.publishedLabel}
+        </span>
       </span>
     </>
   );
