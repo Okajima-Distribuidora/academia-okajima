@@ -1,0 +1,1135 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider     = "mysql"
+  relationMode = "prisma"
+}
+
+model activities {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @default(0)
+  text    String @default("") @db.VarChar(300)
+  image   String @default("") @db.VarChar(300)
+  time    String @default("") @db.VarChar(50)
+}
+
+model admininvitations {
+  id     Int    @id @default(autoincrement())
+  code   String @default("0") @db.VarChar(300)
+  posted String @default("0") @db.VarChar(50)
+  status Int    @default(0)
+
+  @@index([code(length: 255)], map: "code")
+}
+
+model ads_transactions {
+  id          Int    @id @default(autoincrement())
+  ad_id       Int    @default(0)
+  video_owner Int    @default(0)
+  amount      String @default("0") @db.VarChar(11)
+  type        String @default("") @db.VarChar(50)
+  time        String @default("") @db.VarChar(100)
+}
+
+model announcement_views {
+  id              Int @id @default(autoincrement())
+  user_id         Int @default(0)
+  announcement_id Int @default(0)
+
+  @@index([announcement_id], map: "announcement_id")
+  @@index([user_id], map: "user_id")
+}
+
+model announcements {
+  id     Int     @id @default(autoincrement())
+  text   String? @db.Text
+  time   Int     @default(0)
+  active Int     @default(1)
+
+  @@index([active], map: "active")
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model app_login {
+  CODIGORCA  Int?
+  NOMERCA    String?   @db.VarChar(255)
+  CODIGOSV   Int?
+  NOMESV     String?   @db.VarChar(255)
+  CODIGOCV   Int?
+  NOMECV     String?   @db.VarChar(255)
+  CODIGOGV   Int?
+  NOMEGV     String?   @db.VarChar(255)
+  CODMOD     Int?
+  MODELO     String?   @db.VarChar(255)
+  FAIXA      String?   @db.VarChar(255)
+  SENHA      String?   @db.VarChar(255)
+  FUNCAO     String?   @db.VarChar(255)
+  CPF        String?   @db.VarChar(14)
+  EMAIL      String?   @db.VarChar(255)
+  STATUS     String?   @db.VarChar(50)
+  DATAINICIO DateTime? @db.Date
+  DATAFIM    DateTime? @db.Date
+  PERFIL     String?   @db.VarChar(255)
+  TELEFONE   String?   @db.VarChar(20)
+  is_hashed  Int?      @default(0) @db.TinyInt
+
+  @@ignore
+}
+
+model apps {
+  id               Int    @id @default(autoincrement())
+  app_user_id      Int    @default(0)
+  app_name         String @db.VarChar(32)
+  app_website_url  String @db.VarChar(55)
+  app_description  String @db.Text
+  app_avatar       String @default("upload/photos/app-default-icon.png") @db.VarChar(100)
+  app_callback_url String @db.VarChar(255)
+  app_id           String @db.VarChar(32)
+  app_secret       String @db.VarChar(55)
+  active           Int    @default(1)
+
+  @@index([active], map: "active")
+  @@index([app_id], map: "app_id")
+  @@index([app_user_id], map: "app_user_id")
+}
+
+model apps_codes {
+  id      Int    @id @default(autoincrement())
+  code    String @default("") @db.VarChar(50)
+  app_id  String @default("") @db.VarChar(50)
+  user_id Int    @default(0)
+  time    Int    @default(0)
+
+  @@index([app_id], map: "app_id")
+  @@index([code], map: "code")
+  @@index([user_id], map: "user_id")
+}
+
+model apps_permission {
+  id      Int @id @default(autoincrement())
+  user_id Int
+  app_id  Int
+
+  @@index([user_id, app_id], map: "user_id")
+}
+
+model backup_codes {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @default(0)
+  codes   String @default("") @db.VarChar(500)
+
+  @@index([user_id], map: "user_id")
+}
+
+model bad_login {
+  id   Int    @id @default(autoincrement())
+  ip   String @default("") @db.VarChar(100)
+  time Int    @default(0)
+
+  @@index([ip], map: "ip")
+  @@index([time], map: "time")
+}
+
+model bank_receipts {
+  id           Int    @id @default(autoincrement()) @db.UnsignedInt
+  user_id      Int    @default(0) @db.UnsignedInt
+  profile_id   Int    @default(0)
+  video_id     Int    @default(0)
+  description  String @db.TinyText
+  price        String @default("0") @db.VarChar(50)
+  mode         String @default("") @db.VarChar(50)
+  approved     Int    @default(0) @db.UnsignedInt
+  receipt_file String @default("") @db.VarChar(250)
+  created_at   String @default("") @db.VarChar(50)
+  approved_at  Int    @default(0) @db.UnsignedInt
+}
+
+model banned {
+  id         Int     @id @default(autoincrement())
+  ip_address String? @default("") @db.VarChar(100)
+  time       String  @default("") @db.VarChar(50)
+}
+
+model block {
+  id         Int    @id @default(autoincrement())
+  user_id    Int    @default(0)
+  blocked_id Int    @default(0)
+  time       String @default("") @db.VarChar(50)
+
+  @@index([blocked_id], map: "blocked_id")
+  @@index([user_id], map: "user_id")
+}
+
+model cards {
+  id               Int     @id @default(autoincrement())
+  video_id         Int     @default(0)
+  user_id          Int     @default(0)
+  ref_video        Int     @default(0)
+  title            String  @default("") @db.VarChar(300)
+  url              String? @db.Text
+  duration         String  @default("00:00") @db.VarChar(33)
+  color            String  @default("") @db.VarChar(100)
+  background_color String  @default("") @db.VarChar(100)
+  type             String  @default("") @db.VarChar(100)
+  part             String  @default("") @db.VarChar(100)
+  time             Int     @default(0)
+
+  @@index([part], map: "part")
+  @@index([ref_video], map: "ref_video")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model comm_replies {
+  id         Int     @id @default(autoincrement())
+  user_id    Int     @default(0)
+  comment_id Int     @default(0)
+  video_id   Int     @default(0)
+  post_id    Int     @default(0)
+  text       String? @db.Text
+  time       String  @default("0") @db.VarChar(50)
+}
+
+model comments {
+  id          Int     @id @default(autoincrement())
+  user_id     Int     @default(0)
+  video_id    Int?    @default(0)
+  post_id     Int     @default(0)
+  activity_id Int     @default(0)
+  text        String? @db.Text
+  time        Int     @default(0)
+  pinned      Int?    @default(0)
+  likes       Int     @default(0)
+  dis_likes   Int     @default(0)
+
+  @@index([dis_likes], map: "dis_likes")
+  @@index([likes], map: "likes")
+  @@index([post_id], map: "post_id")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model comments_likes {
+  id         Int @id @default(autoincrement())
+  user_id    Int @default(0)
+  comment_id Int @default(0)
+  reply_id   Int @default(0)
+  video_id   Int @default(0)
+  post_id    Int @default(0)
+  time       Int @default(0)
+  type       Int @default(1)
+
+  @@index([comment_id], map: "comment_id")
+  @@index([post_id], map: "post_id")
+  @@index([reply_id], map: "reply_id")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model config {
+  id    Int    @id @default(autoincrement())
+  name  String @db.VarChar(100)
+  value String @db.VarChar(20000)
+
+  @@index([name], map: "name")
+  @@index([value(length: 255)], map: "value")
+}
+
+model conversations {
+  id       Int @id @default(autoincrement())
+  user_one Int @default(0)
+  user_two Int @default(0)
+  time     Int @default(0)
+
+  @@index([time], map: "time")
+  @@index([user_one], map: "user_one")
+  @@index([user_two], map: "user_two")
+}
+
+model copyright_report {
+  id       Int    @id @default(autoincrement())
+  video_id Int    @default(0)
+  user_id  Int    @default(0)
+  text     String @default("") @db.VarChar(300)
+  time     String @default("") @db.VarChar(50)
+
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model custom_pages {
+  id           Int     @id @default(autoincrement())
+  page_name    String  @default("") @db.VarChar(50)
+  page_title   String  @default("") @db.VarChar(200)
+  page_content String? @db.Text
+  page_type    Int     @default(0)
+}
+
+model dashboard_reports {
+  id    Int    @id @default(autoincrement())
+  name  String @default("") @db.VarChar(50)
+  value String @default("") @db.VarChar(1000)
+
+  @@index([name], map: "name")
+}
+
+model faqs {
+  id       Int     @id @default(autoincrement())
+  question String  @default("") @db.VarChar(100)
+  answer   String? @db.Text
+  time     Int     @default(0)
+}
+
+model hashtags {
+  id   Int    @id @default(autoincrement())
+  tag  String @default("") @db.VarChar(200)
+  time Int    @default(0)
+
+  @@index([tag], map: "tag")
+  @@index([time], map: "time")
+}
+
+model history {
+  id       Int @id @default(autoincrement())
+  user_id  Int @default(0)
+  video_id Int @default(0)
+  time     Int @default(0)
+
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model invitation_links {
+  id         Int    @id @default(autoincrement())
+  user_id    Int    @default(0)
+  invited_id Int    @default(0)
+  code       String @default("") @db.VarChar(300)
+  time       Int    @default(0)
+
+  @@index([code], map: "code")
+  @@index([invited_id], map: "invited_id")
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+}
+
+model lang_iso {
+  id        Int    @id @default(autoincrement())
+  lang_name String @default("") @db.VarChar(100)
+  iso       String @default("") @db.VarChar(50)
+  image     String @default("") @db.VarChar(300)
+  status    Int    @default(1)
+
+  @@index([image], map: "image")
+  @@index([iso], map: "iso")
+  @@index([lang_name], map: "lang_name")
+  @@index([status], map: "status")
+}
+
+model langs {
+  id       Int     @id @default(autoincrement())
+  lang_key String? @db.VarChar(160)
+  type     String  @default("") @db.VarChar(100)
+  english  String? @db.LongText
+
+  @@index([lang_key], map: "lang_key")
+}
+
+model likes_dislikes {
+  id          Int @id @default(autoincrement())
+  user_id     Int @default(0)
+  video_id    Int @default(0)
+  post_id     Int @default(0)
+  activity_id Int @default(0)
+  type        Int @default(0)
+  time        Int @default(0)
+
+  @@index([post_id], map: "post_id")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model lists {
+  id          Int    @id @default(autoincrement())
+  list_id     String @default("") @db.VarChar(300)
+  user_id     Int    @default(0)
+  name        String @default("") @db.VarChar(100)
+  description String @default("") @db.VarChar(500)
+  privacy     Int    @default(1)
+  views       Int    @default(0)
+  icon        String @default("") @db.VarChar(3000)
+  time        Int    @default(0)
+
+  @@index([list_id(length: 255)], map: "list_id")
+  @@index([privacy], map: "privacy")
+  @@index([user_id], map: "user_id")
+}
+
+model live_sub_users {
+  id          Int @id @default(autoincrement())
+  user_id     Int @default(0)
+  post_id     Int @default(0)
+  is_watching Int @default(0)
+  time        Int @default(0)
+
+  @@index([is_watching], map: "is_watching")
+  @@index([post_id], map: "post_id")
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+}
+
+model manage_pro {
+  id              Int    @id @default(autoincrement())
+  type            String @default("") @db.VarChar(100)
+  price           Float  @default(0) @db.Float
+  featured_videos Int    @default(0)
+  verified_badge  Int    @default(0)
+  discount        Int    @default(0)
+  image           String @default("") @db.VarChar(300)
+  night_image     String @default("") @db.VarChar(300)
+  color           String @default("#fafafa") @db.VarChar(50)
+  description     String @default("") @db.VarChar(1000)
+  status          Int    @default(1)
+  time            String @default("month") @db.VarChar(20)
+  time_count      Int    @default(1)
+  max_upload      String @default("96000000") @db.VarChar(100)
+  features        String @default("{\"can_use_article\":1,\"can_use_playlist\":1,\"can_use_post\":1,\"can_use_payed_subscribers\":1,\"can_use_donate\":1,\"can_use_invite_links\":1,\"can_use_point\":1,\"can_use_upload\":1,\"can_use_import\":1,\"can_use_youtube_short\":1,\"can_use_ok_import\":1,\"can_use_facebook_import\":1,\"can_use_instagram_import\":1,\"can_use_twitch_import\":1,\"can_use_tiktok_import\":1,\"can_use_embed_videos\":1,\"can_use_trailer_system\":1,\"can_use_restrict_embedding\":1,\"can_use_video_text\":1,\"can_use_stock_videos\":1,\"can_use_download_videos\":1,\"can_use_movies_videos\":1,\"can_use_geo_blocking\":1,\"can_use_shorts\":1,\"can_use_hashtag\":1,\"can_use_sell_videos\":1,\"can_use_rent_videos\":1,\"can_use_live_video\":1,\"can_use_live_save\":1,\"can_use_user_ads\":1,\"can_use_usr_v_mon\":1,\"can_use_affiliate\":1,\"can_use_affiliate_new_user\":1,\"can_use_affiliate_pro\":1,\"can_use_affiliate_subscribe\":1,\"can_use_affiliate_buy_rent\":1,\"can_use_pro_google\":1}") @db.VarChar(1000)
+
+  @@index([color], map: "color")
+  @@index([discount], map: "discount")
+  @@index([featured_videos], map: "featured_videos")
+  @@index([features], map: "features")
+  @@index([image], map: "image")
+  @@index([max_upload], map: "max_upload")
+  @@index([night_image], map: "night_image")
+  @@index([price], map: "price")
+  @@index([status], map: "status")
+  @@index([time], map: "time")
+  @@index([time_count], map: "time_count")
+  @@index([type], map: "type")
+  @@index([verified_badge], map: "verified_badge")
+}
+
+model messages {
+  id           Int     @id @default(autoincrement())
+  from_id      Int     @default(0)
+  to_id        Int     @default(0)
+  text         String? @db.Text
+  seen         Int     @default(0)
+  time         Int     @default(0)
+  from_deleted Int     @default(0)
+  to_deleted   Int     @default(0)
+
+  @@index([from_deleted], map: "from_deleted")
+  @@index([from_id], map: "from_id")
+  @@index([seen], map: "seen")
+  @@index([time], map: "time")
+  @@index([to_deleted], map: "to_deleted")
+  @@index([to_id], map: "to_id")
+}
+
+model monetization_requests {
+  id             Int    @id @default(autoincrement())
+  user_id        Int    @default(0)
+  name           String @default("") @db.VarChar(100)
+  message        String @default("") @db.VarChar(600)
+  personal_photo String @default("") @db.VarChar(300)
+  id_photo       String @default("") @db.VarChar(300)
+  time           String @default("") @db.VarChar(50)
+
+  @@index([user_id], map: "user_id")
+}
+
+model not_interested {
+  id       Int @id @default(autoincrement())
+  user_id  Int @default(0)
+  video_id Int @default(0)
+  time     Int @default(0)
+
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model notifications {
+  id           Int     @id @default(autoincrement())
+  notifier_id  Int     @default(0)
+  recipient_id Int     @default(0)
+  video_id     Int     @default(0)
+  type         String  @default("") @db.VarChar(50)
+  text         String? @db.Text
+  url          String  @default("") @db.VarChar(3000)
+  seen         String  @default("0") @db.VarChar(50)
+  time         String  @default("0") @db.VarChar(50)
+  sent_push    Int     @default(0)
+  full_link    String  @default("") @db.VarChar(1000)
+  admin        Int     @default(0)
+
+  @@index([admin], map: "admin")
+  @@index([notifier_id], map: "notifier_id")
+  @@index([recipient_id], map: "recipient_id")
+  @@index([seen], map: "seen")
+  @@index([sent_push], map: "sent_push")
+  @@index([time], map: "time")
+  @@index([type], map: "type")
+  @@index([video_id], map: "video_id")
+}
+
+model payments {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @default(0)
+  type    String @default("") @db.VarChar(200)
+  amount  Int    @default(0)
+  date    String @default("") @db.VarChar(100)
+  expire  String @default("") @db.VarChar(30)
+
+  @@index([amount], map: "amount")
+  @@index([expire], map: "expire")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+}
+
+model pending_payments {
+  id           Int    @id @default(autoincrement())
+  user_id      Int    @default(0)
+  payment_data String @default("") @db.VarChar(500)
+  method_name  String @default("") @db.VarChar(100)
+  time         Int    @default(0)
+
+  @@index([method_name], map: "method_name")
+  @@index([payment_data], map: "payment_data")
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+}
+
+model play_list {
+  id       Int    @id @default(autoincrement())
+  list_id  String @default("") @db.VarChar(500)
+  video_id String @default("") @db.VarChar(500)
+  user_id  Int    @default(0)
+
+  @@index([list_id(length: 255)], map: "list_id")
+  @@index([video_id(length: 255)], map: "video_id")
+}
+
+model playlist_subscribers {
+  id            Int    @id @default(autoincrement())
+  list_id       String @default("") @db.VarChar(50)
+  subscriber_id Int    @default(0)
+  time          Int    @default(0)
+  active        Int    @default(1)
+
+  @@index([active], map: "active")
+  @@index([subscriber_id], map: "subscriber_id")
+  @@index([list_id], map: "user_id")
+}
+
+model profile_fields {
+  id                Int     @id @default(autoincrement())
+  name              String  @default("") @db.VarChar(50)
+  description       String? @db.Text
+  options           String  @default("") @db.VarChar(3000)
+  type              String? @db.Text
+  length            Int     @default(0)
+  placement         String  @default("profile") @db.VarChar(32)
+  registration_page Int     @default(0)
+  profile_page      Int     @default(0)
+  active            Int     @default(0)
+
+  @@index([active], map: "active")
+  @@index([profile_page], map: "profile_page")
+  @@index([registration_page], map: "registration_page")
+}
+
+model pt_posts {
+  id          Int     @id @default(autoincrement())
+  title       String  @default("") @db.VarChar(300)
+  description String  @default("") @db.VarChar(500)
+  category    String  @default("") @db.VarChar(100)
+  image       String  @default("") @db.VarChar(3000)
+  text        String? @db.Text
+  tags        String  @default("") @db.VarChar(500)
+  time        String  @default("0") @db.VarChar(50)
+  user_id     Int     @default(0)
+  active      Int     @default(0)
+  views       Int     @default(0)
+  shared      Int     @default(0)
+
+  @@index([active], map: "active")
+  @@index([title(length: 255)], map: "title")
+  @@index([user_id], map: "user_id")
+  @@index([views], map: "views")
+}
+
+model queue {
+  id         Int    @id @default(autoincrement())
+  video_id   Int    @default(0)
+  video_res  String @default("") @db.VarChar(20)
+  processing Int    @default(0)
+
+  @@index([processing], map: "processing")
+  @@index([video_id], map: "video_id")
+  @@index([video_res], map: "video_res")
+}
+
+model reports {
+  id         Int     @id @default(autoincrement())
+  video_id   Int     @default(0)
+  article_id Int     @default(0)
+  ad_id      Int     @default(0)
+  comment_id Int     @default(0)
+  reply_id   Int     @default(0)
+  profile_id Int     @default(0)
+  user_id    Int     @default(0)
+  text       String? @db.Text
+  time       String  @default("") @db.VarChar(50)
+  seen       Int     @default(0)
+  type       String  @default("") @db.VarChar(100)
+
+  @@index([ad_id], map: "ad_id")
+  @@index([article_id], map: "article_id")
+  @@index([profile_id], map: "profile_id")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model saved_videos {
+  id       Int @id @default(autoincrement())
+  user_id  Int @default(0)
+  video_id Int @default(0)
+  time     Int @default(0)
+
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model sessions {
+  id               Int     @id @default(autoincrement())
+  session_id       String  @default("") @db.VarChar(100)
+  user_id          Int     @default(0)
+  platform         String  @default("web") @db.VarChar(30)
+  platform_details String? @db.Text
+  time             Int     @default(0)
+
+  @@index([platform], map: "platform")
+  @@index([session_id], map: "session_id")
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+}
+
+model site_ads {
+  id        Int     @id @default(autoincrement())
+  placement String  @default("") @db.VarChar(50)
+  code      String? @db.Text
+  active    Int     @default(0)
+
+  @@index([active], map: "active")
+  @@index([placement], map: "placement")
+}
+
+model subscriptions {
+  id            Int @id @default(autoincrement())
+  user_id       Int @default(0)
+  subscriber_id Int @default(0)
+  time          Int @default(0)
+  active        Int @default(0)
+  notify        Int @default(0)
+
+  @@index([active], map: "active")
+  @@index([notify], map: "notify")
+  @@index([subscriber_id], map: "subscriber_id")
+  @@index([user_id], map: "user_id")
+}
+
+model terms {
+  id   Int     @id @default(autoincrement())
+  type String  @db.VarChar(400)
+  text String? @db.Text
+}
+
+model typings {
+  id       Int @id @default(autoincrement())
+  user_one Int @default(0)
+  user_two Int @default(0)
+  time     Int @default(0)
+
+  @@index([time], map: "time")
+  @@index([user_one], map: "user_one")
+  @@index([user_two], map: "user_two")
+}
+
+model uploaded_chunks {
+  id         Int      @id @default(autoincrement())
+  user_id    Int      @default(0)
+  filename   String   @default("") @db.VarChar(200)
+  folderpath String   @default("") @db.VarChar(200)
+  status     String   @default("pending") @db.VarChar(20)
+  type       String   @default("video") @db.VarChar(22)
+  name       String   @db.VarChar(50)
+  timestamp  DateTime @default(now()) @db.Timestamp(0)
+
+  @@index([filename], map: "filename")
+  @@index([status], map: "status")
+  @@index([timestamp], map: "timestamp")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+}
+
+model uploaded_media {
+  id       Int    @id @default(autoincrement())
+  filename String @default("") @db.VarChar(200)
+  storage  String @db.VarChar(34)
+  time     Int    @default(0)
+
+  @@index([filename], map: "filename")
+  @@index([filename, storage], map: "filename_2")
+  @@index([time], map: "time")
+}
+
+model uploaded_videos {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @default(0)
+  path    String @default("") @db.VarChar(300)
+  time    Int    @default(0)
+}
+
+model user_ads {
+  id             Int     @id @default(autoincrement())
+  name           String  @default("") @db.VarChar(500)
+  results        Int     @default(0)
+  spent          String  @default("0") @db.VarChar(20)
+  status         Int     @default(1)
+  audience       String? @db.Text
+  category       String  @default("") @db.VarChar(50)
+  media          String  @default("") @db.VarChar(1000)
+  url            String  @default("") @db.VarChar(3000)
+  user_id        Int     @default(0)
+  placement      String  @default("") @db.VarChar(50)
+  posted         String  @default("0") @db.VarChar(50)
+  headline       String  @default("") @db.VarChar(1000)
+  description    String  @default("") @db.VarChar(1000)
+  location       String  @default("") @db.VarChar(1000)
+  type           String  @default("") @db.VarChar(50)
+  day_limit      String  @default("0") @db.VarChar(11)
+  day            String  @default("") @db.VarChar(50)
+  day_spend      String  @default("0") @db.VarChar(11)
+  lifetime_limit Float   @default(0) @db.Float
+
+  @@index([category], map: "category")
+  @@index([location(length: 255)], map: "location")
+  @@index([placement], map: "placement")
+  @@index([status], map: "status")
+  @@index([type], map: "type")
+  @@index([user_id], map: "user_id")
+}
+
+model users {
+  id                    Int     @id @default(autoincrement())
+  username              String  @default("") @db.VarChar(255)
+  codigorca             String  @default("") @db.VarChar(32)
+  email                 String  @default("") @db.VarChar(255)
+  ip_address            String  @default("") @db.VarChar(150)
+  password              String? @default("") @db.VarChar(255)
+  first_name            String  @default("") @db.VarChar(50)
+  last_name             String  @default("") @db.VarChar(50)
+  gender                String  @default("male") @db.VarChar(10)
+  email_code            String  @default("") @db.VarChar(50)
+  device_id             String  @default("") @db.VarChar(200)
+  language              String  @default("english") @db.VarChar(22)
+  avatar                String  @default("upload/photos/d-avatar.jpg") @db.VarChar(100)
+  cover                 String  @default("upload/photos/d-cover.jpg") @db.VarChar(100)
+  src                   String  @default("") @db.VarChar(22)
+  country_id            Int     @default(0)
+  age                   Int     @default(0)
+  about                 String? @db.Text
+  google                String  @default("") @db.VarChar(50)
+  facebook              String  @default("") @db.VarChar(50)
+  twitter               String  @default("") @db.VarChar(50)
+  instagram             String  @default("") @db.VarChar(100)
+  active                Int     @default(1)
+  admin                 Int     @default(0)
+  verified              Int     @default(0)
+  last_active           Int     @default(0)
+  registered            String  @default("0000/00") @db.VarChar(40)
+  time                  Int     @default(0)
+  is_pro                Int     @default(0)
+  pro_type              Int     @default(0)
+  imports               Int     @default(0)
+  uploads               Int     @default(0)
+  wallet                Float   @default(0) @db.Float
+  balance               String  @default("0") @db.VarChar(100)
+  video_mon             Int     @default(0)
+  age_changed           Int     @default(0)
+  academy_video_progress academy_video_progress[]
+  donation_paypal_email String  @default("") @db.VarChar(100)
+  user_upload_limit     String  @default("0") @db.VarChar(50)
+  two_factor            Int     @default(0)
+  google_secret         String  @default("") @db.VarChar(100)
+  authy_id              String  @default("") @db.VarChar(100)
+  two_factor_method     String  @default("") @db.VarChar(50)
+  last_month            String? @db.Text
+  active_time           Int     @default(0)
+  active_expire         String  @default("0") @db.VarChar(100)
+  phone_number          String  @default("") @db.VarChar(50)
+  subscriber_price      String  @default("0") @db.VarChar(11)
+  monetization          Int     @default(0)
+  new_email             String  @default("") @db.VarChar(50)
+  fav_category          String  @default("") @db.VarChar(400)
+  total_ads             Float   @default(0) @db.Float
+  suspend_upload        Int     @default(0)
+  suspend_import        Int     @default(0)
+  paystack_ref          String  @default("") @db.VarChar(100)
+  ConversationId        String  @default("") @db.VarChar(50)
+  point_day_expire      Int     @default(0)
+  points                Float   @default(0) @db.Float
+  daily_points          Int     @default(0)
+  converted_points      Float   @default(0) @db.Float
+  info_file             String  @default("") @db.VarChar(300)
+  google_tracking_code  String  @default("") @db.VarChar(100)
+  newsletters           Int     @default(0)
+  vk                    String  @default("") @db.VarChar(18)
+  qq                    String  @default("") @db.VarChar(18)
+  wechat                String  @default("") @db.VarChar(18)
+  discord               String  @default("") @db.VarChar(18)
+  mailru                String  @default("") @db.VarChar(18)
+  linkedIn              String  @default("") @db.VarChar(18)
+  pause_history         Int     @default(0)
+  tv_code               String  @default("") @db.VarChar(10)
+  permission            String? @db.VarChar(3000)
+  referrer              Int     @default(0)
+  ref_user_id           Int     @default(0)
+  ref_type              String  @default("") @db.VarChar(50)
+  privacy               String  @default("{\"show_subscriptions_count\":\"yes\",\"who_can_message_me\":\"all\",\"who_can_watch_my_videos\":\"all\"}") @db.VarChar(500)
+  is_hashed             Boolean @default(false)
+  NOMERCA               String  @default("0") @db.VarChar(50)
+  CODIGOSV              Decimal @default(0) @db.Decimal(4, 0)
+  NOMESV                String  @default("0") @db.VarChar(50)
+  CODIGOCV              Decimal @default(0) @db.Decimal(4, 0)
+  MODELO                String  @default("0") @db.VarChar(120)
+  FAIXA                 String  @default("0") @db.VarChar(14)
+  SENHA                 String  @default("0") @db.VarChar(255)
+  FUNCAO                String  @default("0") @db.VarChar(13)
+  NOMECV                String? @default("0") @db.VarChar(50)
+  CODMOD                Int?    @default(0)
+
+  @@index([active], map: "active")
+  @@index([active_time], map: "active_time")
+  @@index([admin], map: "admin")
+  @@index([balance], map: "balance")
+  @@index([converted_points], map: "converted_points")
+  @@index([email], map: "email")
+  @@index([is_pro], map: "is_pro")
+  @@index([last_active], map: "last_active")
+  @@index([password], map: "password")
+  @@index([pause_history], map: "pause_history")
+  @@index([permission(length: 1024)], map: "permission")
+  @@index([pro_type], map: "pro_type")
+  @@index([ref_user_id], map: "ref_user_id")
+  @@index([referrer], map: "referrer")
+  @@index([registered], map: "registered")
+  @@index([tv_code], map: "tv_code")
+  @@index([username], map: "username")
+  @@index([video_mon], map: "video_mon")
+  @@index([wallet], map: "wallet")
+}
+
+model usr_prof_fields {
+  id      Int    @id @default(autoincrement())
+  user_id Int    @default(0)
+  fid_2   String @default("") @db.VarChar(32)
+  fid_3   String @default("") @db.VarChar(32)
+  fid_1   String @default("") @db.VarChar(32)
+
+  @@index([user_id], map: "user_id")
+}
+
+model verification_requests {
+  id         Int     @id @default(autoincrement())
+  user_id    Int     @default(0)
+  name       String  @default("") @db.VarChar(200)
+  message    String? @db.Text
+  media_file String? @db.Text
+  time       String  @default("0") @db.VarChar(100)
+}
+
+model video_ads {
+  id            Int    @id @default(autoincrement())
+  ad_link       String @default("") @db.VarChar(400)
+  name          String @default("") @db.VarChar(300)
+  ad_media      String @default("") @db.VarChar(400)
+  ad_image      String @default("") @db.VarChar(400)
+  skip_seconds  Int    @default(0)
+  vast_type     String @default("") @db.VarChar(30)
+  vast_xml_link String @default("") @db.VarChar(700)
+  views         Int    @default(0)
+  clicks        Int    @default(0)
+  active        Int    @default(0)
+  user_id       Int    @default(0)
+
+  @@index([active], map: "active")
+  @@index([user_id], map: "user_id")
+}
+
+model video_progresso {
+  id              Int       @id @default(autoincrement())
+  user_code       String    @db.VarChar(100)
+  video_code      String    @db.VarChar(100)
+  codigo1         String?   @db.VarChar(100)
+  video1          String?   @db.VarChar(100)
+  watched_percent Decimal?  @default(0.00) @db.Decimal(5, 2)
+  watched_seconds Decimal?  @default(0.00) @db.Decimal(10, 2)
+  created_at      DateTime? @default(now()) @db.DateTime(0)
+  updated_at      DateTime? @default(now()) @db.DateTime(0)
+
+  @@unique([user_code, video_code], map: "user_code")
+}
+
+model video_time {
+  id       Int    @id @default(autoincrement())
+  user_id  Int    @default(0)
+  video_id Int    @default(0)
+  time     String @default("0") @db.VarChar(50)
+
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model videos {
+  id                       Int                           @id @default(autoincrement())
+  video_id                 String                        @unique(map: "video_id_2") @default("") @db.VarChar(32)
+  user_id                  Int                           @default(0)
+  short_id                 String                        @default("") @db.VarChar(10)
+  title                    String                        @default("") @db.VarChar(100)
+  description              String?                       @db.Text
+  thumbnail                String                        @default("upload/photos/thumbnail.jpg") @db.VarChar(500)
+  video_location           String                        @default("") @db.VarChar(3000)
+  youtube                  String                        @default("") @db.VarChar(32)
+  vimeo                    String                        @default("") @db.VarChar(32)
+  daily                    String                        @default("") @db.VarChar(32)
+  facebook                 String                        @default("") @db.VarChar(100)
+  instagram                String                        @default("") @db.VarChar(100)
+  ok                       String                        @default("") @db.VarChar(100)
+  twitch                   String                        @default("") @db.VarChar(100)
+  twitch_type              String                        @default("") @db.VarChar(50)
+  embed                    Int                           @default(0)
+  time                     Int                           @default(0)
+  time_date                String                        @default("") @db.VarChar(50)
+  active                   Int                           @default(0)
+  tags                     String?                       @db.Text
+  duration                 String                        @default("00:00") @db.VarChar(33)
+  size                     BigInt                        @default(0)
+  converted                Int                           @default(1)
+  category_id              Int                           @default(0)
+  views                    Int                           @default(0)
+  featured                 Int                           @default(0)
+  registered               String                        @default("0000/00") @db.VarChar(30)
+  privacy                  Int                           @default(0)
+  age_restriction          Int                           @default(1)
+  type                     String                        @default("") @db.VarChar(100)
+  approved                 Int                           @default(1)
+  p240                     Int                           @default(0) @map("240p")
+  p360                     Int                           @default(0) @map("360p")
+  p480                     Int                           @default(0) @map("480p")
+  p720                     Int                           @default(0) @map("720p")
+  p1080                    Int                           @default(0) @map("1080p")
+  p2048                    Int                           @default(0) @map("2048p")
+  p4096                    Int                           @default(0) @map("4096p")
+  sell_video               Float                         @default(0) @db.Float
+  sub_category             String                        @default("") @db.VarChar(100)
+  geo_blocking             String                        @default("") @db.VarChar(200)
+  demo                     String                        @default("") @db.VarChar(3000)
+  gif                      String                        @default("") @db.VarChar(3000)
+  is_movie                 Int                           @default(0)
+  stars                    String                        @default("") @db.VarChar(200)
+  producer                 String                        @default("") @db.VarChar(200)
+  country                  String                        @default("") @db.VarChar(50)
+  movie_release            String                        @default("") @db.VarChar(4)
+  quality                  String                        @default("") @db.VarChar(11)
+  rating                   String                        @default("") @db.VarChar(11)
+  monetization             Int                           @default(1)
+  rent_price               Int                           @default(0)
+  stream_name              String                        @default("") @db.VarChar(150)
+  live_time                Int                           @default(0)
+  live_ended               Int                           @default(0)
+  agora_resource_id        String?                       @db.Text
+  agora_sid                String                        @default("") @db.VarChar(500)
+  agora_token              String?                       @db.Text
+  license                  String                        @default("") @db.VarChar(100)
+  is_stock                 Int                           @default(0)
+  trailer                  String                        @default("") @db.VarChar(3000)
+  embedding                Int                           @default(0)
+  live_chating             String                        @default("on") @db.VarChar(11)
+  publication_date         Int                           @default(0)
+  is_short                 Int                           @default(0)
+  featured_movie           Int                           @default(0)
+  upload_status            String                        @default("uploading") @db.VarChar(20)
+  upload_started_at        DateTime                      @default(now()) @db.DateTime(0)
+  upload_status_updated_at DateTime                      @default(now()) @db.DateTime(0)
+  processing_started_at    DateTime?                     @db.DateTime(0)
+  ready_at                 DateTime?                     @db.DateTime(0)
+  cancelled_at             DateTime?                     @db.DateTime(0)
+  deleted_at               DateTime?                     @db.DateTime(0)
+  subcategories            academy_video_subcategories[]
+  academy_video_progress   academy_video_progress[]
+
+  @@index([p1080], map: "1080p")
+  @@index([p2048], map: "2048")
+  @@index([p240], map: "240p")
+  @@index([p360], map: "360p")
+  @@index([p4096], map: "4096p")
+  @@index([p480], map: "480p")
+  @@index([p720], map: "720p")
+  @@index([age_restriction], map: "age_restriction")
+  @@index([approved], map: "approved")
+  @@index([category_id], map: "category_id")
+  @@index([category_id, id], map: "category_id_2")
+  @@index([daily], map: "daily")
+  @@index([embed], map: "embed")
+  @@index([featured], map: "featured")
+  @@index([featured_movie], map: "featured_movie")
+  @@index([geo_blocking], map: "geo_blocking")
+  @@index([is_movie], map: "is_movie")
+  @@index([is_short], map: "is_short")
+  @@index([is_stock], map: "is_stock")
+  @@index([live_time], map: "live_time")
+  @@index([ok], map: "ok")
+  @@index([category_id, id], map: "order1")
+  @@index([id, views], map: "order2")
+  @@index([privacy], map: "privacy")
+  @@index([publication_date], map: "publication_date")
+  @@index([registered], map: "registered")
+  @@index([sell_video], map: "sell_video")
+  @@index([short_id], map: "short_id")
+  @@index([sub_category], map: "sub_category")
+  @@index([time], map: "time")
+  @@index([time_date], map: "time_date")
+  @@index([twitch], map: "twitch")
+  @@index([user_id], map: "user_id")
+  @@index([views], map: "views")
+  @@index([vimeo], map: "vimeo")
+  @@index([youtube], map: "youtube_id")
+  @@index([upload_status, upload_status_updated_at], map: "videos_upload_status_updated_idx")
+  @@fulltext([description], map: "description")
+  @@fulltext([tags], map: "tags")
+  @@fulltext([title], map: "title")
+}
+
+model academy_video_progress {
+  id                        Int       @id @default(autoincrement())
+  user_id                   Int
+  video_id                  Int
+  resume_position_seconds   Int       @default(0)
+  furthest_position_seconds Int       @default(0)
+  completed_at              DateTime? @db.DateTime(0)
+  last_watched_at           DateTime  @default(now()) @db.DateTime(0)
+  created_at                DateTime  @default(now()) @db.DateTime(0)
+  updated_at                DateTime  @updatedAt @db.DateTime(0)
+  user                      users     @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  video                     videos    @relation(fields: [video_id], references: [id], onDelete: Cascade)
+
+  @@unique([user_id, video_id], map: "academy_video_progress_user_video_unique")
+  @@index([user_id, last_watched_at], map: "academy_video_progress_user_last_watched_idx")
+  @@index([video_id], map: "academy_video_progress_video_idx")
+}
+
+model academy_categories {
+  id            Int                     @id @default(autoincrement())
+  name          String                  @db.VarChar(120)
+  slug          String                  @unique(map: "academy_categories_slug_unique") @db.VarChar(140)
+  description   String?                 @db.VarChar(500)
+  sort_order    Int                     @default(0)
+  is_active     Boolean                 @default(true)
+  created_at    DateTime                @default(now()) @db.DateTime(0)
+  updated_at    DateTime                @updatedAt @db.DateTime(0)
+  subcategories academy_subcategories[]
+
+  @@index([is_active, sort_order], map: "academy_categories_active_sort_idx")
+}
+
+model academy_subcategories {
+  id          Int                           @id @default(autoincrement())
+  category_id Int
+  name        String                        @db.VarChar(120)
+  slug        String                        @db.VarChar(140)
+  description String?                       @db.VarChar(500)
+  sort_order  Int                           @default(0)
+  is_active   Boolean                       @default(true)
+  created_at  DateTime                      @default(now()) @db.DateTime(0)
+  updated_at  DateTime                      @updatedAt @db.DateTime(0)
+  category    academy_categories            @relation(fields: [category_id], references: [id], onDelete: Cascade, map: "academy_subcategories_category_fk")
+  videos      academy_video_subcategories[]
+
+  @@unique([category_id, slug], map: "academy_subcategories_category_slug_unique")
+  @@index([category_id, is_active, sort_order], map: "academy_subcategories_category_active_sort_idx")
+}
+
+model academy_video_subcategories {
+  video_id       Int
+  subcategory_id Int
+  created_at     DateTime              @default(now()) @db.DateTime(0)
+  subcategory    academy_subcategories @relation(fields: [subcategory_id], references: [id], onDelete: Cascade, map: "academy_video_subcategories_subcategory_fk")
+  video          videos                @relation(fields: [video_id], references: [id], onDelete: Cascade, map: "academy_video_subcategories_video_fk")
+
+  @@id([video_id, subcategory_id])
+  @@index([subcategory_id], map: "academy_video_subcategories_subcategory_idx")
+}
+
+model videos_transactions {
+  id        Int    @id @default(autoincrement())
+  user_id   Int    @default(0)
+  paid_id   Int    @default(0)
+  video_id  Int    @default(0)
+  amount    String @default("0") @db.VarChar(11)
+  admin_com String @default("0") @db.VarChar(11)
+  currency  String @default("USD") @db.VarChar(11)
+  time      String @default("0") @db.VarChar(50)
+  type      String @default("") @db.VarChar(50)
+}
+
+model views {
+  id          Int    @id @default(autoincrement())
+  video_id    Int    @default(0)
+  fingerprint String @default("") @db.VarChar(300)
+  user_id     Int    @default(0)
+  time        Int    @default(0)
+
+  @@index([fingerprint(length: 255)], map: "fingerprint")
+  @@index([time], map: "time")
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+  @@index([video_id, time], map: "video_id_2")
+  @@index([user_id, video_id, time], map: "views_user_video_time_idx")
+}
+
+model watch_later {
+  id       Int    @id @default(autoincrement())
+  user_id  Int    @default(0)
+  video_id Int    @default(0)
+  time     String @default("") @db.VarChar(50)
+
+  @@index([user_id], map: "user_id")
+  @@index([video_id], map: "video_id")
+}
+
+model withdrawal_requests {
+  id            Int    @id @default(autoincrement())
+  user_id       Int    @default(0)
+  email         String @default("") @db.VarChar(200)
+  amount        String @default("0") @db.VarChar(100)
+  currency      String @default("") @db.VarChar(20)
+  iban          String @default("") @db.VarChar(250)
+  country       String @default("") @db.VarChar(100)
+  full_name     String @default("") @db.VarChar(150)
+  swift_code    String @default("") @db.VarChar(100)
+  address       String @default("") @db.VarChar(600)
+  transfer_info String @default("") @db.VarChar(600)
+  type          String @default("") @db.VarChar(100)
+  requested     String @default("") @db.VarChar(100)
+  status        Int    @default(0)
+}
