@@ -1,79 +1,140 @@
 "use client";
 
-import { useState } from "react";
+import { IconPlayerPlay } from "@tabler/icons-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import Image from "next/image";
-import { IconPlayerPlayFilled, IconX } from "@tabler/icons-react";
+import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import type { FeaturedVideo as FeaturedVideoData } from "@/lib/home/catalog";
-import lightLogo from "@/public/logo-light.png";
+import { videoWatchHref } from "@/lib/home/navigation";
+import { cn } from "@/lib/utils";
+import lightLogo from "@/public/logo+titulo-light.png";
 
 export function FeaturedVideo({
+  activeIndex,
+  progress,
+  totalVideos,
   video,
-  initiallyPlaying = false,
+  onPrevious,
+  onNext,
 }: {
+  activeIndex: number;
+  progress: number;
+  totalVideos: number;
   video: FeaturedVideoData;
-  initiallyPlaying?: boolean;
+  onPrevious: () => void;
+  onNext: () => void;
 }) {
-  const [playing, setPlaying] = useState(initiallyPlaying);
-  const playerUrl = video.vimeoId
-    ? `https://player.vimeo.com/video/${video.vimeoId}?autoplay=1&title=0&byline=0&portrait=0`
-    : null;
-
-  if (playing && playerUrl) {
-    return (
-      <section className="home-featured-video relative overflow-hidden bg-foreground" aria-label={`Reproduzindo ${video.title}`}>
-        <iframe
-          src={playerUrl}
-          title={video.title}
-          className="absolute inset-0 size-full border-0"
-          allow="autoplay; fullscreen; picture-in-picture; clipboard-write; encrypted-media"
-        />
-        <Button
-          type="button"
-          variant="secondary"
-          size="icon"
-          className="absolute top-4 right-4 rounded-full shadow-lg"
-          aria-label="Fechar vídeo"
-          onClick={() => setPlaying(false)}
-        >
-          <IconX aria-hidden="true" />
-        </Button>
-      </section>
-    );
-  }
+  const watchHref =
+    video.categorySlug && video.vimeoId
+      ? videoWatchHref({ slug: video.categorySlug }, video)
+      : null;
 
   return (
-    <section className="home-featured-video relative isolate overflow-hidden bg-foreground text-primary-foreground" aria-labelledby="featured-video-title">
+    <section
+      className="home-featured-video relative isolate overflow-hidden bg-foreground text-primary-foreground"
+      aria-labelledby="featured-video-title"
+    >
       {video.thumbnailUrl ? (
         <Image
           src={video.thumbnailUrl}
           alt=""
           fill
           priority
-          sizes="(max-width: 767px) 100vw, (max-width: 1279px) 85vw, 1200px"
+          sizes="(max-width: 639px) 100vw, (max-width: 1279px) 85vw, 1200px"
           className="home-featured-image object-cover"
         />
       ) : null}
-      <div className="home-featured-overlay absolute inset-0" aria-hidden="true" />
-      <div className="home-featured-content relative flex h-full max-w-2xl flex-col items-start justify-end gap-5 p-6 sm:p-10 lg:justify-center lg:p-14 xl:p-16">
-        <Image
-          src={lightLogo}
-          alt="Academia Okajima"
-          sizes="(max-width: 639px) 112px, 144px"
-          className="home-featured-brand"
-        />
-        <div className="flex flex-col gap-3">
+      <div
+        className="home-featured-overlay absolute inset-0"
+        aria-hidden="true"
+      />
+      <div className="home-featured-content relative flex h-full flex-col items-start justify-end px-6 pt-6 pb-5 sm:px-16 sm:pt-16 sm:pb-8 lg:px-14 lg:pt-14 lg:pb-8 xl:px-16 xl:pt-16 xl:pb-9">
+        <div className="home-featured-copy">
+          <Image
+            src={lightLogo}
+            alt="Academia Okajima"
+            sizes="(max-width: 639px) 128px, 180px"
+            className="home-featured-brand"
+          />
           <h1 id="featured-video-title" className="home-featured-title">
             {video.title}
           </h1>
-          {video.description ? <p className="home-featured-description line-clamp-2 max-w-xl">{video.description}</p> : null}
+          {watchHref ? (
+            <Link
+              href={watchHref}
+              className={cn(
+                buttonVariants({ variant: "featured", size: "hero" }),
+                "home-featured-action",
+              )}
+            >
+              <IconPlayerPlay data-icon="inline-start" aria-hidden="true" />
+              Começar a assistir
+            </Link>
+          ) : (
+            <span
+              className={cn(
+                buttonVariants({ variant: "featured", size: "hero" }),
+                "home-featured-action aria-disabled:pointer-events-none aria-disabled:opacity-50",
+              )}
+              aria-disabled
+            >
+              <IconPlayerPlay data-icon="inline-start" aria-hidden="true" />
+              Em migração
+            </span>
+          )}
+          {totalVideos > 1 ? (
+            <div className="home-featured-progress" aria-hidden="true">
+              {Array.from({ length: totalVideos }).map((_, index) => (
+                <span
+                  key={`${activeIndex}-${index}`}
+                  className={cn(
+                    "home-featured-progress-item",
+                    index === activeIndex && "is-active",
+                  )}
+                >
+                  <span
+                    className="home-featured-progress-fill"
+                    style={
+                      index === activeIndex
+                        ? { transform: `scaleX(${progress})` }
+                        : undefined
+                    }
+                  />
+                </span>
+              ))}
+            </div>
+          ) : null}
         </div>
-        <Button type="button" variant="featured" size="hero" disabled={!playerUrl} onClick={() => setPlaying(true)}>
-          <IconPlayerPlayFilled data-icon="inline-start" aria-hidden="true" />
-          {playerUrl ? "Começar a assistir" : "Reprodução em migração"}
-        </Button>
       </div>
+      {totalVideos > 1 ? (
+        <div
+          className="home-featured-controls"
+          aria-label="Navegação dos vídeos em destaque"
+        >
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-lg"
+            className="home-featured-control"
+            aria-label="Vídeo anterior em destaque"
+            onClick={onPrevious}
+          >
+            <ChevronLeft aria-hidden="true" />
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon-lg"
+            className="home-featured-control"
+            aria-label="Próximo vídeo em destaque"
+            onClick={onNext}
+          >
+            <ChevronRight aria-hidden="true" />
+          </Button>
+        </div>
+      ) : null}
     </section>
   );
 }

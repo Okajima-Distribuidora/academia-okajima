@@ -37,3 +37,37 @@ informe o problema; não prossiga como se tivesse consultado.
   mesmo que componentes existentes ou `components.json` ainda usem Lucide.
 - Não migre ícones não relacionados ao pedido apenas para uniformizar
   a biblioteca; preserve o escopo da alteração.
+
+## Persistência de dados — obrigatório
+
+Antes de criar ou modificar schemas, migrations, consultas, comandos ou regras
+de persistência:
+
+1. Leia integralmente `.agents/skills/database-persistence/SKILL.md`.
+2. Inspecione o schema, as migrations e a camada de acesso existentes.
+3. Modele estados, transições, timestamps, constraints e índices de forma
+   explícita e proporcional ao valor operacional dos dados.
+4. Preserve compatibilidade com dados legados e não descarte histórico sem uma
+   decisão explícita do produto.
+5. Valide migrations e cubra transições críticas, idempotência e falhas parciais.
+
+Informe brevemente que está usando a skill antes de editar persistência.
+
+## TanStack Query — adoção incremental
+
+Antes de criar, modificar ou migrar queries, mutations, cache cliente, polling
+ou invalidação com `@tanstack/react-query`:
+
+1. Leia integralmente `docs/tanstack-query.md`.
+2. Preserve Server Components para leituras que não precisam de estado remoto
+   interativo no navegador.
+3. Use a infraestrutura compartilhada em `lib/query` e hooks por domínio em
+   `hooks/queries`; não declare query keys ou tratamento HTTP dentro da UI.
+4. Separe contratos serializáveis de módulos `server-only`.
+5. Migre de forma incremental, começando pelo Studio, sem alterar fluxos
+   adjacentes apenas para uniformizar.
+6. Valide invalidação, polling, concorrência e rollback conforme o risco da
+   operação.
+
+Informe brevemente que está seguindo o guia antes de editar integrações com
+TanStack Query.
