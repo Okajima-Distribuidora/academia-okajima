@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { IconChevronLeft, IconChevronRight, IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import { IconChevronLeft, IconChevronRight, IconVideo } from "@tabler/icons-react";
 
 import { Button } from "@/components/ui/button";
 import type { RecentVideo } from "@/lib/home/catalog";
+import { RecentVideoCardContent } from "./recent-video-card-content";
 
 export function RecentVideos({
   videos,
@@ -93,28 +93,7 @@ export function RecentVideos({
                   disabled={!video.vimeoId}
                   onClick={() => onSelect(video)}
                 >
-                  <span className="home-recent-thumbnail">
-                    {video.thumbnailUrl ? (
-                      <Image
-                        src={video.thumbnailUrl}
-                        alt=""
-                        fill
-                        sizes="(max-width: 639px) 94vw, (max-width: 1199px) 20.5rem, 28vw"
-                        className="home-recent-image object-cover"
-                      />
-                    ) : (
-                      <IconVideo className="home-recent-placeholder-icon" aria-hidden="true" stroke={1.4} />
-                    )}
-                    <span className="home-recent-play" aria-hidden="true">
-                      <IconPlayerPlayFilled />
-                    </span>
-                    {video.duration ? <span className="home-recent-duration">{video.duration}</span> : null}
-                  </span>
-                  <span className="home-recent-copy">
-                    <strong>{video.title}</strong>
-                    <span>{video.categoryLabel ?? "Academia Okajima"}</span>
-                    <span>{video.viewsLabel} · {video.publishedLabel}</span>
-                  </span>
+                  <RecentVideoCardContent video={video} />
                 </button>
               </li>
             );

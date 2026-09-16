@@ -17,10 +17,15 @@ export function ThemeSelector() {
   const labelId = useId();
   const mounted = useSyncExternalStore(subscribe, () => true, () => false);
   const { theme, setTheme } = useTheme();
+  const selectedOption = themeOptions.find((option) => option.value === theme) ?? themeOptions[2];
+  const SelectedIcon = selectedOption.icon;
 
   return <FieldGroup className="px-3 py-2">
     <Field orientation="horizontal" className="justify-between gap-4" data-disabled={!mounted || undefined}>
-      <FieldTitle id={labelId}>Tema</FieldTitle>
+      <FieldTitle id={labelId} className="[&_svg]:size-4 [&_svg]:shrink-0">
+        <SelectedIcon aria-hidden="true" />
+        Tema
+      </FieldTitle>
       <ToggleGroup
         aria-labelledby={labelId}
         spacing={1}

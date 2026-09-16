@@ -8,7 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "typecheck": "next typegen && tsc --noEmit",
-    "test": "node --conditions=react-server --import tsx --test tests/auth/auth.test.ts tests/auth/remembered-identifier.test.ts tests/home/catalog.test.ts tests/home/navigation.test.ts",
+    "test": "node --conditions=react-server --import tsx --test tests/auth/auth.test.ts tests/auth/remembered-identifier.test.ts tests/home/catalog.test.ts tests/home/navigation.test.ts tests/studio/stats.test.ts",
     "test:db": "node --env-file=.env.local --conditions=react-server --import tsx --test tests/auth/database.test.ts",
     "test:http": "node --env-file=.env.local --conditions=react-server --import tsx --test tests/auth/http.test.ts"
   },

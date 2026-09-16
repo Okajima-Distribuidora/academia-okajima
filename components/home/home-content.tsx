@@ -1,19 +1,24 @@
 import { IconVideo, IconFile, IconHelpCircle, IconSearch, IconDeviceMobile } from "@tabler/icons-react";
 import { Empty, EmptyHeader, EmptyMedia, EmptyTitle, EmptyDescription } from "@/components/ui/empty";
-import type { HomeCatalog } from "@/lib/home/catalog";
+import type { HomeCatalog, RecentVideosPage as RecentVideosPageData } from "@/lib/home/catalog";
 import { getHomeSection } from "@/lib/home/navigation";
 import { CategoryFilter } from "./category-filter";
 import { HomeShowcase } from "./home-showcase";
+import { RecentVideosPage } from "./recent-videos-page";
 
 export function HomeContent({
   section,
   query,
   catalog,
+  recentVideosPage,
 }: {
   section: ReturnType<typeof getHomeSection>;
   query: string;
   catalog: HomeCatalog | null;
+  recentVideosPage: RecentVideosPageData | null;
 }) {
+  if (recentVideosPage) return <RecentVideosPage page={recentVideosPage} />;
+
   if (catalog) {
     return (
       <main id="conteudo" tabIndex={-1} className="home-content flex min-w-0 flex-1 flex-col outline-none">

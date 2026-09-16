@@ -31,6 +31,15 @@ export interface HomeCatalog {
   recentVideos: RecentVideo[];
 }
 
+export interface RecentVideosPage {
+  videos: RecentVideo[];
+  currentPage: number;
+  totalPages: number;
+  totalVideos: number;
+}
+
+export const RECENT_VIDEOS_PAGE_SIZE = 20;
+
 export function formatViews(views: number): string {
   const safeViews = Number.isFinite(views) && views > 0 ? Math.floor(views) : 0;
   return `${new Intl.NumberFormat("pt-BR").format(safeViews)} ${safeViews === 1 ? "visualização" : "visualizações"}`;
@@ -102,8 +111,18 @@ async function listCategories(): Promise<HomeCategory[]> {
   return categories;
 }
 
+function publicVideosQuery() {
+  return getDb().selectFrom("videos")
+    .where("converted", "!=", 2)
+    .where("privacy", "=", 0)
+    .where("is_movie", "=", 0)
+    .where("live_time", "=", 0)
+    .where("approved", "=", 1)
+    .where("is_short", "=", 0);
+}
+
 async function findFeaturedVideo(categoryId: string | null) {
-  let query = getDb().selectFrom("videos")
+  let query = publicVideosQuery()
     .select([
       "id",
       "video_id",
@@ -113,13 +132,7 @@ async function findFeaturedVideo(categoryId: string | null) {
       "category_id",
       "vimeo",
       "video_location",
-    ])
-    .where("converted", "!=", 2)
-    .where("privacy", "=", 0)
-    .where("is_movie", "=", 0)
-    .where("live_time", "=", 0)
-    .where("approved", "=", 1)
-    .where("is_short", "=", 0);
+    ]);
 
   if (categoryId !== null) query = query.where("category_id", "=", Number(categoryId));
 
@@ -131,7 +144,73 @@ async function findFeaturedVideo(categoryId: string | null) {
 }
 
 async function listRecentVideos(categoryId: string | null, featuredVideoId: number | null) {
-  let query = getDb().selectFrom("videos")
+  let query = publicVideosQuery()
+    .select([
+      "id",
+      "video_id",
+      "title",
+      "description",
+      "duration",
+      "category_id",
+      "vimeo",
+      "video_location",
+      "time",
+      "views",
+    ]);
+
+  if (categoryId !== null) query = query.where("category_id", "=", Number(categoryId));
+  if (featuredVideoId !== null) query = query.where("id", "!=", featuredVideoId);
+
+  return query
+    .orderBy("time", "desc")
+    .orderBy("id", "desc")
+    .limit(8)
+    .execute();
+}
+
+export function normalizeRecentVideosPage(value: string | null | undefined): number {
+  if (!value || !/^\d+$/.test(value)) return 1;
+
+  const page = Number(value);
+  return Number.isSafeInteger(page) && page > 0 ? page : 1;
+}
+
+async function presentRecentVideos(
+  rows: Awaited<ReturnType<typeof listRecentVideos>>,
+  categories: HomeCategory[],
+): Promise<RecentVideo[]> {
+  const categoryLabels = new Map(categories.map((category) => [category.id, category.label]));
+
+  return Promise.all(rows.map(async (video): Promise<RecentVideo> => {
+    const vimeoId = extractVimeoId(video.vimeo, video.video_location);
+    const vimeo = vimeoId ? await getVimeoVideoPresentation(vimeoId) : null;
+
+    return {
+      id: video.id,
+      publicId: video.video_id,
+      title: decodeLegacyText(video.title.trim()),
+      description: decodeLegacyText(video.description?.trim() ?? ""),
+      duration: video.duration.trim(),
+      categoryLabel: categoryLabels.get(String(video.category_id)) ?? null,
+      vimeoId,
+      thumbnailUrl: vimeo?.thumbnailUrl ?? null,
+      publishedLabel: formatPublishedAt(video.time),
+      viewsLabel: formatViews(video.views),
+    };
+  }));
+}
+
+export async function getRecentVideosPage(requestedPage: number): Promise<RecentVideosPage> {
+  const [categories, countRow] = await Promise.all([
+    listCategories(),
+    publicVideosQuery()
+      .select(({ fn }) => fn.countAll<number>().as("total"))
+      .executeTakeFirst(),
+  ]);
+  const totalVideos = Number(countRow?.total ?? 0);
+  const totalPages = Math.ceil(totalVideos / RECENT_VIDEOS_PAGE_SIZE);
+  const currentPage = Math.min(Math.max(1, requestedPage), Math.max(1, totalPages));
+  const rows = await publicVideosQuery()
     .select([
       "id",
       "video_id",
@@ -144,21 +223,18 @@ async function listRecentVideos(categoryId: string | null, featuredVideoId: numb
       "time",
       "views",
     ])
-    .where("converted", "!=", 2)
-    .where("privacy", "=", 0)
-    .where("is_movie", "=", 0)
-    .where("live_time", "=", 0)
-    .where("approved", "=", 1)
-    .where("is_short", "=", 0);
-
-  if (categoryId !== null) query = query.where("category_id", "=", Number(categoryId));
-  if (featuredVideoId !== null) query = query.where("id", "!=", featuredVideoId);
-
-  return query
     .orderBy("time", "desc")
     .orderBy("id", "desc")
-    .limit(8)
+    .limit(RECENT_VIDEOS_PAGE_SIZE)
+    .offset((currentPage - 1) * RECENT_VIDEOS_PAGE_SIZE)
     .execute();
+
+  return {
+    videos: await presentRecentVideos(rows, categories),
+    currentPage,
+    totalPages,
+    totalVideos,
+  };
 }
 
 export async function getHomeCatalog(requestedCategoryId: string | null): Promise<HomeCatalog> {
@@ -171,28 +247,12 @@ export async function getHomeCatalog(requestedCategoryId: string | null): Promis
   if (!video) return { categories, activeCategoryId, featuredVideo: null, recentVideos: [] };
 
   const recentRows = await listRecentVideos(activeCategoryId, video.id);
-  const categoryLabels = new Map(categories.map((category) => [category.id, category.label]));
   const vimeoId = extractVimeoId(video.vimeo, video.video_location);
   const [vimeo, recentVideos] = await Promise.all([
     vimeoId ? getVimeoVideoPresentation(vimeoId) : null,
-    Promise.all(recentRows.map(async (recentVideo): Promise<RecentVideo> => {
-      const recentVimeoId = extractVimeoId(recentVideo.vimeo, recentVideo.video_location);
-      const recentVimeo = recentVimeoId ? await getVimeoVideoPresentation(recentVimeoId) : null;
-
-      return {
-        id: recentVideo.id,
-        publicId: recentVideo.video_id,
-        title: decodeLegacyText(recentVideo.title.trim()),
-        description: decodeLegacyText(recentVideo.description?.trim() ?? ""),
-        duration: recentVideo.duration.trim(),
-        categoryLabel: categoryLabels.get(String(recentVideo.category_id)) ?? null,
-        vimeoId: recentVimeoId,
-        thumbnailUrl: recentVimeo?.thumbnailUrl ?? null,
-        publishedLabel: formatPublishedAt(recentVideo.time),
-        viewsLabel: formatViews(recentVideo.views),
-      };
-    })),
+    presentRecentVideos(recentRows, categories),
   ]);
+  const categoryLabels = new Map(categories.map((category) => [category.id, category.label]));
 
   return {
     categories,
