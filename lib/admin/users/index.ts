@@ -11,7 +11,11 @@ import type {
   AdminUsersPage,
   AdminUsersStats,
 } from "./contracts";
-import type { AdminUserCreateInput, AdminUserUpdateInput } from "./validation";
+import type {
+  AdminUserCreateInput,
+  AdminUserPasswordResetInput,
+  AdminUserUpdateInput,
+} from "./validation";
 
 export type {
   AdminUserCreated,
@@ -26,6 +30,7 @@ export const ADMIN_USERS_PAGE_SIZES = [20, 30, 40, 50] as const;
 export interface AdminUserDetails extends AdminUserListItem {
   email: string;
   firstName: string;
+  gender: "female" | "male";
   lastName: string;
   registeredAt: number;
   username: string;
@@ -187,6 +192,7 @@ export async function getAdminUserDetails(
       codigorca: true,
       email: true,
       first_name: true,
+      gender: true,
       last_name: true,
       active: true,
       admin: true,
@@ -201,6 +207,7 @@ export async function getAdminUserDetails(
     rca: user.codigorca,
     email: user.email.trim(),
     firstName: user.first_name.trim(),
+    gender: user.gender === "female" ? "female" : "male",
     lastName: user.last_name.trim(),
     isActive: user.active === 1,
     isAdmin: user.admin === 1,
@@ -232,6 +239,7 @@ export async function updateAdminUser(
       email: input.email,
       active: input.isActive ? 1 : 0,
       admin: input.isAdmin ? 1 : 0,
+      gender: input.gender,
     },
     select: {
       id: true,
@@ -239,6 +247,7 @@ export async function updateAdminUser(
       codigorca: true,
       email: true,
       first_name: true,
+      gender: true,
       last_name: true,
       active: true,
       admin: true,
@@ -252,12 +261,32 @@ export async function updateAdminUser(
     rca: user.codigorca,
     email: user.email.trim(),
     firstName: user.first_name.trim(),
+    gender: user.gender === "female" ? "female" : "male",
     lastName: user.last_name.trim(),
     isActive: user.active === 1,
     isAdmin: user.admin === 1,
     registeredAt: user.time,
     username: user.username.trim(),
   };
+}
+
+export async function resetAdminUserPassword(
+  userId: string,
+  input: AdminUserPasswordResetInput,
+): Promise<boolean> {
+  const id = Number(userId);
+  if (!Number.isSafeInteger(id) || id < 1) return false;
+
+  const password = await PasswordUtils.hashPassword(input.password);
+  const result = await getPrisma().users.updateMany({
+    where: { id },
+    data: {
+      must_change_password: input.mustChangePassword,
+      password,
+    },
+  });
+
+  return result.count === 1;
 }
 
 export class AdminUserIdentifierConflictError extends Error {

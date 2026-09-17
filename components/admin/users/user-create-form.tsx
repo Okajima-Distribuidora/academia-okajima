@@ -10,6 +10,7 @@ import {
   IconRefresh,
 } from "@tabler/icons-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -58,6 +59,7 @@ import {
   adminUserCreateSchema,
 } from "@/lib/admin/users/validation";
 import { ApiError } from "@/lib/query/http";
+import { generateRandomPassword } from "./utils/password";
 
 const formId = "admin-user-create-form";
 
@@ -75,6 +77,7 @@ const defaultValues: AdminUserCreateInput = {
 };
 
 export function UserCreateForm() {
+  const router = useRouter();
   const form = useForm<AdminUserCreateInput>({
     defaultValues,
     resolver: zodResolver(adminUserCreateSchema),
@@ -87,13 +90,16 @@ export function UserCreateForm() {
   async function onSubmit(values: AdminUserCreateInput) {
     try {
       const user = await createUser.mutateAsync(values);
-      setTemporaryPassword(user.temporaryPassword);
       toast.add({
         title: "Usuário criado",
         description: "O usuário foi incluído com sucesso.",
         type: "success",
       });
-      form.reset(defaultValues);
+      if (user.temporaryPassword) {
+        setTemporaryPassword(user.temporaryPassword);
+      } else {
+        router.replace("/admin/usuarios");
+      }
     } catch (error) {
       if (error instanceof ApiError && error.status === 409) {
         form.setError("rca", { message: error.message });
@@ -191,6 +197,7 @@ export function UserCreateForm() {
         onOpenChange={(open) => {
           if (!open) {
             setTemporaryPassword(null);
+            router.replace("/admin/usuarios");
           }
         }}
       >
@@ -396,7 +403,7 @@ function PasswordField({
           type="button"
           variant="outline"
           onClick={() =>
-            form.setValue("password", generatePassword(), {
+            form.setValue("password", generateRandomPassword(), {
               shouldDirty: true,
               shouldValidate: true,
             })
@@ -441,16 +448,6 @@ function RequirePasswordChange({
       </FieldContent>
     </Field>
   );
-}
-
-function generatePassword() {
-  const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789";
-  const randomValues = new Uint32Array(18);
-  crypto.getRandomValues(randomValues);
-  return Array.from(
-    randomValues,
-    (value) => alphabet[value % alphabet.length],
-  ).join("");
 }
 
 function PermissionCombobox({

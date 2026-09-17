@@ -62,10 +62,9 @@ export default async function AdminUserDetailsPage({
       />
       <Card>
         <CardHeader>
-          <CardTitle>Editar usuário</CardTitle>
-          <CardDescription>
-            Informações disponíveis para a administração da Academia.
-          </CardDescription>
+          <CardTitle className="text-xl! font-semibold">
+            Dados do usuário
+          </CardTitle>
         </CardHeader>
         <CardContent>
           <UserDetailsForm user={user} />

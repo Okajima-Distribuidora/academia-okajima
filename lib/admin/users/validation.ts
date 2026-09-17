@@ -14,6 +14,7 @@ export const adminUserUpdateSchema = z.object({
     .string()
     .trim()
     .max(50, "O nome deve ter no máximo 50 caracteres."),
+  gender: z.enum(["male", "female"]),
   isActive: z.boolean(),
   isAdmin: z.boolean(),
   lastName: z
@@ -29,6 +30,15 @@ export const adminUserUpdateSchema = z.object({
 });
 
 export type AdminUserUpdateInput = z.infer<typeof adminUserUpdateSchema>;
+
+export const adminUserPasswordResetSchema = z.object({
+  mustChangePassword: z.boolean(),
+  password: newPasswordSchema,
+});
+
+export type AdminUserPasswordResetInput = z.infer<
+  typeof adminUserPasswordResetSchema
+>;
 
 export const adminUserCreateSchema = adminUserUpdateSchema.extend({
   gender: z.enum(["male", "female"]),
