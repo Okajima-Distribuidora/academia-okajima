@@ -735,6 +735,7 @@ model users {
   email                 String  @default("") @db.VarChar(255)
   ip_address            String  @default("") @db.VarChar(150)
   password              String? @default("") @db.VarChar(255)
+  must_change_password  Boolean @default(false)
   first_name            String  @default("") @db.VarChar(50)
   last_name             String  @default("") @db.VarChar(50)
   gender                String  @default("male") @db.VarChar(10)

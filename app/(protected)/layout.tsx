@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { SessionRefresh } from "@/components/auth/session-refresh";
 import { HomeShell } from "@/components/home/home-shell";
 import { Toaster } from "@/components/ui/toast";
@@ -14,6 +15,7 @@ export default async function ProtectedLayout({
     requireUser(),
     listHomeCategoryNavigation(),
   ]);
+  if (user.mustChangePassword) redirect("/alterar-senha");
   const studioCategories = user.isStudioAdmin
     ? await listStudioCategories()
     : [];

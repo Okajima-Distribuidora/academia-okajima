@@ -6,6 +6,7 @@ export interface UsersTable {
   codigorca: string;
   email: string;
   password: string | null;
+  must_change_password: Generated<number>;
   first_name: Generated<string>;
   last_name: Generated<string>;
   avatar: Generated<string>;
