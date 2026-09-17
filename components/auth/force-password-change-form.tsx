@@ -1,8 +1,9 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
-import { IconKey } from "@tabler/icons-react";
+import { IconEye, IconEyeOff } from "@tabler/icons-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { Button } from "@/components/ui/button";
@@ -12,7 +13,12 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
+import {
+  InputGroup,
+  InputGroupAddon,
+  InputGroupButton,
+  InputGroupInput,
+} from "@/components/ui/input-group";
 import { Spinner } from "@/components/ui/spinner";
 import { toast } from "@/components/ui/toast";
 import { passwordChangeSchema } from "@/lib/auth/validation";
@@ -26,6 +32,10 @@ export function ForcePasswordChangeForm() {
     defaultValues: { password: "", passwordConfirmation: "" },
     resolver: zodResolver(passwordChangeSchema),
   });
+  const [visiblePasswords, setVisiblePasswords] = useState({
+    password: false,
+    passwordConfirmation: false,
+  });
 
   async function onSubmit(values: PasswordChangeInput) {
     try {
@@ -36,7 +46,7 @@ export function ForcePasswordChangeForm() {
       });
       toast.add({
         title: "Senha atualizada",
-        description: "Sua nova senha já pode ser usada nos próximos acessos.",
+        description: "Sua nova senha já foi redefinida.",
         type: "success",
       });
       router.replace("/");
@@ -54,19 +64,33 @@ export function ForcePasswordChangeForm() {
   return (
     <form onSubmit={form.handleSubmit(onSubmit)}>
       <FieldGroup>
-        <PasswordField form={form} label="Nova senha" name="password" />
+        <PasswordField
+          form={form}
+          label="Nova senha"
+          name="password"
+          visible={visiblePasswords.password}
+          onToggleVisibility={() =>
+            setVisiblePasswords((current) => ({
+              ...current,
+              password: !current.password,
+            }))
+          }
+        />
         <PasswordField
           form={form}
           label="Confirme a nova senha"
           name="passwordConfirmation"
+          visible={visiblePasswords.passwordConfirmation}
+          onToggleVisibility={() =>
+            setVisiblePasswords((current) => ({
+              ...current,
+              passwordConfirmation: !current.passwordConfirmation,
+            }))
+          }
         />
         <Button disabled={form.formState.isSubmitting} type="submit">
-          {form.formState.isSubmitting ? (
-            <Spinner data-icon="inline-start" />
-          ) : (
-            <IconKey aria-hidden="true" data-icon="inline-start" />
-          )}
-          Salvar nova senha
+          {form.formState.isSubmitting && <Spinner data-icon="inline-start" />}
+          Redefinir senha
         </Button>
       </FieldGroup>
     </form>
@@ -77,10 +101,14 @@ function PasswordField({
   form,
   label,
   name,
+  onToggleVisibility,
+  visible,
 }: {
   form: ReturnType<typeof useForm<PasswordChangeInput>>;
   label: string;
   name: "password" | "passwordConfirmation";
+  onToggleVisibility: () => void;
+  visible: boolean;
 }) {
   const error = form.formState.errors[name];
   const id = `force-password-change-${name}`;
@@ -90,13 +118,29 @@ function PasswordField({
       data-disabled={form.formState.isSubmitting}
     >
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <Input
-        aria-invalid={Boolean(error)}
-        autoComplete="new-password"
-        id={id}
-        type="password"
-        {...form.register(name)}
-      />
+      <InputGroup>
+        <InputGroupInput
+          aria-invalid={Boolean(error)}
+          autoComplete="new-password"
+          id={id}
+          type={visible ? "text" : "password"}
+          {...form.register(name)}
+        />
+        <InputGroupAddon align="inline-end">
+          <InputGroupButton
+            aria-label={visible ? "Ocultar senha" : "Mostrar senha"}
+            size="icon-sm"
+            type="button"
+            onClick={onToggleVisibility}
+          >
+            {visible ? (
+              <IconEyeOff aria-hidden="true" />
+            ) : (
+              <IconEye aria-hidden="true" />
+            )}
+          </InputGroupButton>
+        </InputGroupAddon>
+      </InputGroup>
       <FieldError errors={error ? [error] : undefined} />
     </Field>
   );
