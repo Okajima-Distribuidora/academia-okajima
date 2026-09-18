@@ -445,7 +445,7 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
         }}
       />
       <div className="min-w-0 flex-1 overflow-x-auto">
-        <Table className="min-w-[72rem] table-fixed">
+        <Table className="min-w-6xl table-fixed">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
               <TableHead className="w-10 px-4 sm:w-12 sm:px-5">
@@ -465,7 +465,7 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
           </TableHeader>
           <TableBody>
             {items.map((item) => (
-              <TableRow key={item.id} className="group/content-row h-[5.25rem]">
+              <TableRow key={item.id} className="group/content-row h-21">
                 <TableCell className="px-4 sm:px-5">
                   <Checkbox
                     aria-label={`Selecionar ${item.title}`}
@@ -555,7 +555,7 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                             Envio cancelado
                           </span>
                         ) : (
-                          <span className="block max-w-[32rem] truncate text-xs leading-7 text-muted-foreground group-hover/content-row:hidden group-focus-within/content-row:hidden">
+                          <span className="block max-w-lg truncate text-xs leading-7 text-muted-foreground group-hover/content-row:hidden group-focus-within/content-row:hidden">
                             {item.description}
                           </span>
                         )}

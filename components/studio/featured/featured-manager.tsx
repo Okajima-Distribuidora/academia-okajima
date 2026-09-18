@@ -533,7 +533,7 @@ export function FeaturedManager({
                 </div>
               </div>
               <div className="overflow-x-auto rounded-lg border">
-                <Table className="min-w-[34rem] table-fixed">
+                <Table className="min-w-136 table-fixed">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="w-12" />
