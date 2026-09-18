@@ -9,7 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import type { FeaturedVideo as FeaturedVideoData } from "@/lib/home/catalog";
 import { videoWatchHref } from "@/lib/home/navigation";
 import { cn } from "@/lib/utils";
-import lightLogo from "@/public/logo+titulo-light.png";
+import lightLogo from "@/public/logo-titulo-light.png";
 
 export function FeaturedVideo({
   activeIndex,
