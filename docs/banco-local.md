@@ -61,6 +61,28 @@ Depois da importacao, confira as tabelas e que todas possuem zero registros. Cri
 
 Nao coloque dumps completos no repositorio nem em `public/`.
 
+## Baseline Prisma do banco legado
+
+A migration `20260901000000_baseline_legacy_schema` representa a estrutura
+legada exportada em 02/09/2026. Ela permite que um banco vazio seja criado do
+zero e, principalmente, permite que o Prisma passe a controlar um banco legado
+ja existente sem tentar recriar suas tabelas.
+
+No banco legado existente, registre **somente** essa migration como aplicada,
+uma unica vez, antes de executar `prisma migrate deploy`:
+
+```powershell
+$env:DATABASE_URL = 'mysql://USUARIO:SENHA_CODIFICADA@HOST:3306/BANCO'
+npx prisma migrate resolve --applied 20260901000000_baseline_legacy_schema
+npx prisma migrate deploy
+Remove-Item Env:DATABASE_URL
+```
+
+Codifique os caracteres reservados da senha na URL (por exemplo, `#` vira
+`%23`). Nao marque as migrations posteriores como aplicadas: elas criam as
+tabelas e colunas da Academia. Confira o backup antes da primeira execucao; no
+MySQL 5.7, alteracoes de estrutura nao possuem rollback transacional completo.
+
 ## Persistencia e parada
 
 ```powershell
