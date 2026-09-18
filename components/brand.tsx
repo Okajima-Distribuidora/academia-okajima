@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import lightLogo from "@/public/logo-light.png";
-import darklogo from "@/public/logo+titulo-dark.png";
+import darklogo from "@/public/logo-titulo-dark.png";
 
 export function Brand() {
   return (
