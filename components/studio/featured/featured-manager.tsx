@@ -533,7 +533,7 @@ export function FeaturedManager({
                 </div>
               </div>
               <div className="overflow-x-auto rounded-lg border">
-                <Table className="min-w-[34rem] table-fixed">
+                <Table className="min-w-136 table-fixed">
                   <TableHeader>
                     <TableRow className="hover:bg-transparent">
                       <TableHead className="w-12" />
@@ -644,6 +644,7 @@ function PreviewCard({
               src={activeVideo.thumbnailUrl}
               alt=""
               fill
+              loading="eager"
               sizes="(max-width: 767px) 100vw, 30rem"
               className="object-cover object-[52%_44%]"
             />
@@ -664,9 +665,10 @@ function PreviewCard({
             aria-hidden="true"
           />
           <div className="relative flex h-full flex-col items-start justify-end px-5 pt-5 pb-4">
-            <div className="flex w-full max-w-[21rem] min-w-0 flex-col items-start gap-2">
+            <div className="flex w-full max-w-84 min-w-0 flex-col items-start gap-2">
               <Image
                 src={lightLogo}
+                loading="eager"
                 alt="Academia Okajima"
                 sizes="6rem"
                 className="h-auto w-24"
@@ -909,6 +911,7 @@ function VideoSummary({
             src={video.thumbnailUrl}
             alt=""
             fill
+            loading="eager"
             sizes={compact ? "5rem" : "6rem"}
             className="object-cover"
           />

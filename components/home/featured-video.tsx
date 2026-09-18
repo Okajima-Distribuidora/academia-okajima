@@ -42,6 +42,7 @@ export function FeaturedVideo({
           alt=""
           fill
           priority
+          loading="eager"
           sizes="(max-width: 639px) 100vw, (max-width: 1279px) 85vw, 1200px"
           className="home-featured-image object-cover"
         />
@@ -55,6 +56,7 @@ export function FeaturedVideo({
           <Image
             src={lightLogo}
             alt="Academia Okajima"
+            loading="eager"
             sizes="(max-width: 639px) 128px, 180px"
             className="home-featured-brand"
           />
@@ -109,10 +111,7 @@ export function FeaturedVideo({
         </div>
       </div>
       {totalVideos > 1 ? (
-        <div
-          className="home-featured-controls"
-          aria-label="Navegação dos vídeos em destaque"
-        >
+        <div className="home-featured-controls">
           <Button
             type="button"
             variant="ghost"

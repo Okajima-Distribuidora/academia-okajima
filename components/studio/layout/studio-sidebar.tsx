@@ -171,6 +171,7 @@ export function StudioSidebar({ name, rca }: { name: string; rca: string }) {
                       src={videoDetails.thumbnailUrl}
                       alt=""
                       fill
+                      loading="eager"
                       sizes="18rem"
                       className="object-cover"
                     />

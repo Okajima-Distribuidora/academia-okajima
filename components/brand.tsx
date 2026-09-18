@@ -14,6 +14,7 @@ export function Brand() {
         src={darklogo}
         alt=""
         fill
+        loading="eager"
         sizes="(max-width: 640px) 128px, 144px"
         className="object-contain object-left dark:hidden"
         priority
@@ -22,6 +23,7 @@ export function Brand() {
         src={lightLogo}
         alt=""
         fill
+        loading="eager"
         sizes="(max-width: 640px) 128px, 144px"
         className="hidden object-contain object-left dark:block"
       />

@@ -22,6 +22,7 @@ export function RecentVideoCardContent({
             alt=""
             fill
             priority={priority}
+            loading="eager"
             sizes={sizes}
             className="home-recent-image object-cover"
           />

@@ -169,7 +169,7 @@ export function VideoThumbnailDialog({
         Adicionar miniatura
       </DialogTrigger>
       <DialogContent
-        className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-[40rem]"
+        className="max-h-[calc(100vh-2rem)] overflow-y-auto sm:max-w-160"
         onKeyDown={handleKeyDown}
       >
         <DialogHeader>
@@ -202,6 +202,7 @@ export function VideoThumbnailDialog({
                   src={thumbnailUrl}
                   alt=""
                   fill
+                  loading="eager"
                   sizes="40rem"
                   className="object-cover"
                 />
@@ -255,6 +256,7 @@ export function VideoThumbnailDialog({
                         alt=""
                         fill
                         sizes="6rem"
+                        loading="eager"
                         className="object-cover opacity-80"
                       />
                     ) : null}

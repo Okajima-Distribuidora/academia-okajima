@@ -211,7 +211,8 @@ function HomeTopbar({
               alt=""
               width={22}
               height={22}
-              className="size-5 shrink-0 object-contain sm:size-[22px]"
+              loading="eager"
+              className="size-5 shrink-0 object-contain sm:size-5.5"
             />
             <span className="hidden sm:inline">Academia Studio</span>
           </Link>
