@@ -172,6 +172,7 @@ export function VideoDetailsEditor({
                           alt=""
                           fill
                           sizes="18rem"
+                          loading="eager"
                           className="object-cover"
                         />
                       ) : (
@@ -207,6 +208,7 @@ export function VideoDetailsEditor({
                       src={video.thumbnailUrl}
                       alt=""
                       fill
+                      loading="eager"
                       sizes="22rem"
                       className="object-cover"
                     />

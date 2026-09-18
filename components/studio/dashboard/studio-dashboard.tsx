@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import {
   IconClockHour4,
   IconEye,
@@ -9,6 +8,7 @@ import {
   IconVideo,
 } from "@tabler/icons-react";
 import Image from "next/image";
+import { useState } from "react";
 import {
   CartesianGrid,
   Line,
@@ -28,7 +28,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ChartContainer, type ChartConfig } from "@/components/ui/chart";
+import { type ChartConfig, ChartContainer } from "@/components/ui/chart";
 import {
   Empty,
   EmptyDescription,
@@ -339,6 +339,7 @@ function LatestVideo({ stats }: { stats: StudioStats }) {
             src={video.thumbnailUrl}
             alt=""
             fill
+            loading="eager"
             sizes="(min-width: 1280px) 520px, calc(100vw - 2.5rem)"
             className="object-cover"
           />
@@ -476,6 +477,7 @@ function VideoRow({
             alt=""
             fill
             sizes="4rem"
+            loading="eager"
             className="object-cover"
           />
         ) : (

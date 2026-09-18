@@ -202,6 +202,7 @@ export function VideoThumbnailDialog({
                   src={thumbnailUrl}
                   alt=""
                   fill
+                  loading="eager"
                   sizes="40rem"
                   className="object-cover"
                 />
@@ -255,6 +256,7 @@ export function VideoThumbnailDialog({
                         alt=""
                         fill
                         sizes="6rem"
+                        loading="eager"
                         className="object-cover opacity-80"
                       />
                     ) : null}

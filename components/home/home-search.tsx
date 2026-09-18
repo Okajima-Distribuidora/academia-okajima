@@ -31,6 +31,7 @@ function SearchResultOption({ result }: { result: HomeSearchResult }) {
             alt=""
             width={72}
             height={40}
+            loading="eager"
             className="home-search-option-image"
           />
         ) : (

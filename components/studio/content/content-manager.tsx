@@ -21,9 +21,7 @@ import { useRef, useState } from "react";
 
 import { VideoWarningIcons } from "@/components/studio/content/video-warning-icons";
 import { StudioPageHeader } from "@/components/studio/layout/studio-page-header";
-import {
-  useVideoUploadState,
-} from "@/components/studio/uploads/video-upload-dialog";
+import { useVideoUploadState } from "@/components/studio/uploads/video-upload-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -122,7 +120,9 @@ export function ContentManager({
   });
 
   const items = data.items.map((item) =>
-    content.page === 1 && activeType === "videos" && activeUpload?.databaseVideoId === item.id
+    content.page === 1 &&
+    activeType === "videos" &&
+    activeUpload?.databaseVideoId === item.id
       ? mergeActiveUpload(item, activeUpload)
       : item,
   );
@@ -141,11 +141,7 @@ export function ContentManager({
                 key={tab.value}
                 value={tab.value}
                 nativeButton={false}
-                render={
-                  <Link
-                    href={getContentPageHref(tab.value, 1)}
-                  />
-                }
+                render={<Link href={getContentPageHref(tab.value, 1)} />}
                 className="px-1.5"
               >
                 {tab.label}
@@ -159,10 +155,7 @@ export function ContentManager({
         {items.length > 0 ? (
           <>
             <ContentTable items={items} />
-            <ContentPagination
-              activeType={activeType}
-              content={data}
-            />
+            <ContentPagination activeType={activeType} content={data} />
           </>
         ) : (
           <Empty className="min-h-96 border-0">
@@ -255,10 +248,7 @@ function ContentPagination({
   );
 }
 
-function getContentPageHref(
-  activeType: StudioContentType,
-  page: number,
-) {
+function getContentPageHref(activeType: StudioContentType, page: number) {
   const params = new URLSearchParams();
 
   if (activeType === "shorts") params.set("tipo", "shorts");
@@ -312,8 +302,9 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
     useState<StudioContentItem | null>(null);
   const [selectedPrivacy, setSelectedPrivacy] =
     useState<StudioVideoPrivacy | null>(null);
-  const [pendingResume, setPendingResume] =
-    useState<StudioContentItem | null>(null);
+  const [pendingResume, setPendingResume] = useState<StudioContentItem | null>(
+    null,
+  );
   const [resumingId, setResumingId] = useState<number | null>(null);
   const cancellingId = cancelUpload.isPending
     ? (cancelUpload.variables?.item.id ?? null)
@@ -388,7 +379,8 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
       );
       toast.add({
         title: "Envio retomado",
-        description: "O vídeo continuará do último trecho confirmado pelo Vimeo.",
+        description:
+          "O vídeo continuará do último trecho confirmado pelo Vimeo.",
         type: "success",
       });
       setPendingResume(null);
@@ -453,448 +445,461 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
         }}
       />
       <div className="min-w-0 flex-1 overflow-x-auto">
-      <Table className="min-w-[72rem] table-fixed">
-        <TableHeader>
-          <TableRow className="hover:bg-transparent">
-            <TableHead className="w-10 px-4 sm:w-12 sm:px-5">
-              <Checkbox
-                aria-label="Selecionar todos os vídeos"
-                nativeButton
-                render={<button type="button" />}
-              />
-            </TableHead>
-            <TableHead className="w-[42%] min-w-0">Vídeo</TableHead>
-            <TableHead className="w-64">Avisos</TableHead>
-            <TableHead className="w-32">Visibilidade</TableHead>
-            <TableHead className="w-36">Data</TableHead>
-            <TableHead className="w-28 text-right">
-              Visualizações
-            </TableHead>
-            <TableHead className="w-28 text-right">
-              Comentários
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {items.map((item) => (
-            <TableRow key={item.id} className="group/content-row h-[5.25rem]">
-              <TableCell className="px-4 sm:px-5">
+        <Table className="min-w-[72rem] table-fixed">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-10 px-4 sm:w-12 sm:px-5">
                 <Checkbox
-                  aria-label={`Selecionar ${item.title}`}
+                  aria-label="Selecionar todos os vídeos"
                   nativeButton
                   render={<button type="button" />}
                 />
-              </TableCell>
-              <TableCell className="min-w-0">
-                <div className="flex min-w-0 items-start gap-3">
-                  <span
-                    className={cn(
-                      "relative grid aspect-video w-28 shrink-0 place-items-center overflow-hidden rounded-md bg-muted",
-                      isInterruptedUpload(item, activeUpload) &&
-                        "bg-destructive/10 text-destructive",
-                    )}
-                  >
-                    {isInterruptedUpload(item, activeUpload) ? (
-                      <IconAlertTriangle aria-hidden="true" stroke={1.7} />
-                    ) : item.thumbnailUrl ? (
-                      <Image
-                        src={item.thumbnailUrl}
-                        alt=""
-                        fill
-                        sizes="7rem"
-                        className="object-cover"
-                      />
-                    ) : (
-                      <IconVideo aria-hidden="true" stroke={1.7} />
-                    )}
-                    {item.duration &&
-                    !isInterruptedUpload(item, activeUpload) ? (
-                      <span className="absolute right-1 bottom-1 rounded-sm bg-foreground px-1 py-0.5 text-[0.6875rem] font-semibold leading-none text-background">
-                        {item.duration}
-                      </span>
-                    ) : null}
-                  </span>
-                  <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-start gap-1 pt-0.5">
-                    {isTransientUploadStatus(item.uploadStatus) ? (
-                      <span className="line-clamp-1 text-sm font-semibold">
-                        {item.title}
-                      </span>
-                    ) : (
-                      <Link
-                        href={`/studio/conteudo/${item.publicId}`}
-                        className="line-clamp-1 text-sm font-semibold hover:underline focus-visible:underline focus-visible:outline-none"
-                      >
-                        {item.title}
-                      </Link>
-                    )}
-                    <div className="h-7 min-w-0">
-                      {item.uploadStatus === "uploading" ? (
-                        <div
-                          className={cn(
-                            "flex h-7 min-w-0 items-center gap-2 text-xs text-muted-foreground",
-                            isInterruptedUpload(item, activeUpload) &&
-                              "text-destructive",
-                          )}
-                        >
-                          {isInterruptedUpload(item, activeUpload) ? (
-                            <IconAlertTriangle
-                              aria-hidden="true"
-                              className="size-4 shrink-0"
-                            />
-                          ) : (
-                            <IconUpload
-                              aria-hidden="true"
-                              className="size-4 shrink-0"
-                            />
-                          )}
-                          <span className="truncate">
-                            {isInterruptedUpload(item, activeUpload)
-                              ? "Envio interrompido"
-                              : getUploadProgressLabel(item)}
-                          </span>
-                        </div>
-                      ) : item.uploadStatus === "processing" ? (
-                        <div className="flex h-7 items-center gap-2 text-xs text-muted-foreground">
-                          <IconClock aria-hidden="true" className="size-4 shrink-0" />
-                          <span>Processando vídeo...</span>
-                        </div>
-                      ) : item.uploadStatus === "cancelled" ? (
-                        <span className="block text-xs leading-7 text-muted-foreground">
-                          Envio cancelado
+              </TableHead>
+              <TableHead className="w-[42%] min-w-0">Vídeo</TableHead>
+              <TableHead className="w-64">Avisos</TableHead>
+              <TableHead className="w-32">Visibilidade</TableHead>
+              <TableHead className="w-36">Data</TableHead>
+              <TableHead className="w-28 text-right">Visualizações</TableHead>
+              <TableHead className="w-28 text-right">Comentários</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.map((item) => (
+              <TableRow key={item.id} className="group/content-row h-[5.25rem]">
+                <TableCell className="px-4 sm:px-5">
+                  <Checkbox
+                    aria-label={`Selecionar ${item.title}`}
+                    nativeButton
+                    render={<button type="button" />}
+                  />
+                </TableCell>
+                <TableCell className="min-w-0">
+                  <div className="flex min-w-0 items-start gap-3">
+                    <span
+                      className={cn(
+                        "relative grid aspect-video w-28 shrink-0 place-items-center overflow-hidden rounded-md bg-muted",
+                        isInterruptedUpload(item, activeUpload) &&
+                          "bg-destructive/10 text-destructive",
+                      )}
+                    >
+                      {isInterruptedUpload(item, activeUpload) ? (
+                        <IconAlertTriangle aria-hidden="true" stroke={1.7} />
+                      ) : item.thumbnailUrl ? (
+                        <Image
+                          src={item.thumbnailUrl}
+                          alt=""
+                          fill
+                          sizes="7rem"
+                          loading="eager"
+                          className="object-cover"
+                        />
+                      ) : (
+                        <IconVideo aria-hidden="true" stroke={1.7} />
+                      )}
+                      {item.duration &&
+                      !isInterruptedUpload(item, activeUpload) ? (
+                        <span className="absolute right-1 bottom-1 rounded-sm bg-foreground px-1 py-0.5 text-[0.6875rem] font-semibold leading-none text-background">
+                          {item.duration}
+                        </span>
+                      ) : null}
+                    </span>
+                    <div className="flex min-h-14 min-w-0 flex-1 flex-col justify-start gap-1 pt-0.5">
+                      {isTransientUploadStatus(item.uploadStatus) ? (
+                        <span className="line-clamp-1 text-sm font-semibold">
+                          {item.title}
                         </span>
                       ) : (
-                        <span className="block max-w-[32rem] truncate text-xs leading-7 text-muted-foreground group-hover/content-row:hidden group-focus-within/content-row:hidden">
-                          {item.description}
-                        </span>
+                        <Link
+                          href={`/studio/conteudo/${item.publicId}`}
+                          className="line-clamp-1 text-sm font-semibold hover:underline focus-visible:underline focus-visible:outline-none"
+                        >
+                          {item.title}
+                        </Link>
                       )}
-                      {item.uploadStatus === "ready" ? (
-                        <div className="hidden h-8 items-center gap-1 group-hover/content-row:flex group-focus-within/content-row:flex">
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          nativeButton={false}
-                          render={
-                            <Link href={`/studio/conteudo/${item.publicId}`} />
-                          }
-                          aria-label={`Editar ${item.title}`}
-                        >
-                          <IconPencil aria-hidden="true" className="size-4.5" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Ver analytics de ${item.title}`}
-                        >
-                          <IconChartBar
-                            aria-hidden="true"
-                            className="size-4.5"
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          nativeButton={false}
-                          render={
-                            <Link
-                              href={`/studio/conteudo/${item.publicId}?aba=comentarios`}
+                      <div className="h-7 min-w-0">
+                        {item.uploadStatus === "uploading" ? (
+                          <div
+                            className={cn(
+                              "flex h-7 min-w-0 items-center gap-2 text-xs text-muted-foreground",
+                              isInterruptedUpload(item, activeUpload) &&
+                                "text-destructive",
+                            )}
+                          >
+                            {isInterruptedUpload(item, activeUpload) ? (
+                              <IconAlertTriangle
+                                aria-hidden="true"
+                                className="size-4 shrink-0"
+                              />
+                            ) : (
+                              <IconUpload
+                                aria-hidden="true"
+                                className="size-4 shrink-0"
+                              />
+                            )}
+                            <span className="truncate">
+                              {isInterruptedUpload(item, activeUpload)
+                                ? "Envio interrompido"
+                                : getUploadProgressLabel(item)}
+                            </span>
+                          </div>
+                        ) : item.uploadStatus === "processing" ? (
+                          <div className="flex h-7 items-center gap-2 text-xs text-muted-foreground">
+                            <IconClock
+                              aria-hidden="true"
+                              className="size-4 shrink-0"
                             />
-                          }
-                          aria-label={`Ver comentários de ${item.title}`}
-                        >
-                          <IconMessageCircle
-                            aria-hidden="true"
-                            className="size-4.5"
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Abrir player de ${item.title}`}
-                        >
-                          <IconPlayerPlay
-                            aria-hidden="true"
-                            className="size-4.5"
-                          />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          aria-label={`Mais ações para ${item.title}`}
-                        >
-                          <IconDotsVertical
-                            aria-hidden="true"
-                            className="size-4.5"
-                          />
-                        </Button>
+                            <span>Processando vídeo...</span>
+                          </div>
+                        ) : item.uploadStatus === "cancelled" ? (
+                          <span className="block text-xs leading-7 text-muted-foreground">
+                            Envio cancelado
+                          </span>
+                        ) : (
+                          <span className="block max-w-[32rem] truncate text-xs leading-7 text-muted-foreground group-hover/content-row:hidden group-focus-within/content-row:hidden">
+                            {item.description}
+                          </span>
+                        )}
+                        {item.uploadStatus === "ready" ? (
+                          <div className="hidden h-8 items-center gap-1 group-hover/content-row:flex group-focus-within/content-row:flex">
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              nativeButton={false}
+                              render={
+                                <Link
+                                  href={`/studio/conteudo/${item.publicId}`}
+                                />
+                              }
+                              aria-label={`Editar ${item.title}`}
+                            >
+                              <IconPencil
+                                aria-hidden="true"
+                                className="size-4.5"
+                              />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Ver analytics de ${item.title}`}
+                            >
+                              <IconChartBar
+                                aria-hidden="true"
+                                className="size-4.5"
+                              />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              nativeButton={false}
+                              render={
+                                <Link
+                                  href={`/studio/conteudo/${item.publicId}?aba=comentarios`}
+                                />
+                              }
+                              aria-label={`Ver comentários de ${item.title}`}
+                            >
+                              <IconMessageCircle
+                                aria-hidden="true"
+                                className="size-4.5"
+                              />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Abrir player de ${item.title}`}
+                            >
+                              <IconPlayerPlay
+                                aria-hidden="true"
+                                className="size-4.5"
+                              />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={`Mais ações para ${item.title}`}
+                            >
+                              <IconDotsVertical
+                                aria-hidden="true"
+                                className="size-4.5"
+                              />
+                            </Button>
+                          </div>
+                        ) : null}
                       </div>
-                      ) : null}
                     </div>
                   </div>
-                </div>
-              </TableCell>
-              <TableCell className="text-muted-foreground">
-                {isInterruptedUpload(item, activeUpload) ? (
-                  <div className="flex max-w-64 flex-col gap-1">
-                    <span className="text-xs font-medium text-destructive">
-                      Envio interrompido
+                </TableCell>
+                <TableCell className="text-muted-foreground">
+                  {isInterruptedUpload(item, activeUpload) ? (
+                    <div className="flex max-w-64 flex-col gap-1">
+                      <span className="text-xs font-medium text-destructive">
+                        Envio interrompido
+                      </span>
+                      <span className="text-xs leading-snug text-muted-foreground">
+                        Selecione novamente o arquivo original para continuar.
+                      </span>
+                    </div>
+                  ) : isTransientUploadStatus(item.uploadStatus) ? (
+                    <span className="block text-xs leading-snug">
+                      As verificações começarão após o envio
                     </span>
-                    <span className="text-xs leading-snug text-muted-foreground">
-                      Selecione novamente o arquivo original para continuar.
-                    </span>
-                  </div>
-                ) : isTransientUploadStatus(item.uploadStatus) ? (
-                  <span className="block text-xs leading-snug">
-                    As verificações começarão após o envio
-                  </span>
-                ) : item.uploadStatus === "ready" ? (
-                  <VideoWarningIcons warnings={item.warnings} />
-                ) : (
-                  <span className="text-xs">-</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {item.uploadStatus === "ready" ? (
-                  <Popover
-                    open={pendingVisibility?.id === item.id}
-                    onOpenChange={(open) => {
-                      if (open) {
-                        openVisibilityDialog(item);
-                      } else if (!updateVisibility.isPending) {
-                        setPendingVisibility(null);
-                        setSelectedPrivacy(null);
-                      }
-                    }}
-                  >
-                    <HoverCard>
-                      <HoverCardTrigger render={<span className="inline-flex" />}>
-                        <PopoverTrigger
-                          render={
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="lg"
-                              className="max-w-full justify-start"
-                              disabled={
-                                updateVisibility.isPending &&
-                                updateVisibility.variables?.item.id === item.id
-                              }
-                            />
-                          }
-                          aria-label={`${item.visibilityLabel}. Alterar visibilidade de ${item.title}`}
-                        >
-                          {item.privacy === 0 ? (
-                            <IconWorld
-                              data-icon="inline-start"
-                              aria-hidden="true"
-                            />
-                          ) : (
-                            <IconLock
-                              data-icon="inline-start"
-                              aria-hidden="true"
-                            />
-                          )}
-                          <span className="truncate">
-                            {item.visibilityLabel}
-                          </span>
-                        </PopoverTrigger>
-                      </HoverCardTrigger>
-                      <HoverCardContent
-                        align="start"
-                        side="top"
-                        className="flex w-80 flex-col gap-2 p-3"
-                      >
-                        <p className="font-medium">
-                          {item.privacy === 0
-                            ? "Este vídeo está público"
-                            : "Este vídeo está privado"}
-                        </p>
-                        <p className="text-muted-foreground">
-                          {item.privacy === 0
-                            ? "Os alunos com acesso à Academia podem encontrar e assistir a este vídeo."
-                            : "Este vídeo não fica disponível no catálogo público da Academia."}
-                        </p>
-                      </HoverCardContent>
-                    </HoverCard>
-                    <PopoverContent
-                      align="start"
-                      side="bottom"
-                      sideOffset={6}
-                      className="w-96 gap-4 p-4"
-                    >
-                      <PopoverHeader>
-                        <PopoverTitle>Visibilidade do vídeo</PopoverTitle>
-                        <PopoverDescription>
-                          Defina quem poderá encontrar e assistir a este conteúdo.
-                        </PopoverDescription>
-                      </PopoverHeader>
-                      <FieldSet className="rounded-lg border p-4">
-                        <FieldLegend>Salvar ou publicar</FieldLegend>
-                        <RadioGroup
-                          value={String(selectedPrivacy ?? item.privacy)}
-                          onValueChange={(value) =>
-                            setSelectedPrivacy(value === "1" ? 1 : 0)
-                          }
-                          className="gap-4"
-                        >
-                          <Field orientation="horizontal">
-                            <RadioGroupItem
-                              value="1"
-                              id={`content-visibility-private-${item.id}`}
-                            />
-                            <FieldLabel
-                              htmlFor={`content-visibility-private-${item.id}`}
-                            >
-                              Privado
-                            </FieldLabel>
-                          </Field>
-                          <Field orientation="horizontal">
-                            <RadioGroupItem
-                              value="0"
-                              id={`content-visibility-public-${item.id}`}
-                            />
-                            <FieldLabel
-                              htmlFor={`content-visibility-public-${item.id}`}
-                            >
-                              Público
-                            </FieldLabel>
-                          </Field>
-                        </RadioGroup>
-                      </FieldSet>
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          disabled={updateVisibility.isPending}
-                          onClick={() => {
-                            setPendingVisibility(null);
-                            setSelectedPrivacy(null);
-                          }}
-                        >
-                          Cancelar
-                        </Button>
-                        <Button
-                          type="button"
-                          disabled={
-                            updateVisibility.isPending ||
-                            selectedPrivacy === null ||
-                            selectedPrivacy === pendingVisibility?.privacy
-                          }
-                          onClick={() => void saveVisibility()}
-                        >
-                          {updateVisibility.isPending ? "Salvando..." : "Salvar"}
-                        </Button>
-                      </div>
-                    </PopoverContent>
-                  </Popover>
-                ) : (
-                  <div className="flex min-w-0 items-center gap-2">
-                    {isTransientUploadStatus(item.uploadStatus) ? (
-                    <IconClock
-                      aria-hidden="true"
-                      className="size-4 shrink-0"
-                      stroke={1.7}
-                    />
+                  ) : item.uploadStatus === "ready" ? (
+                    <VideoWarningIcons warnings={item.warnings} />
                   ) : (
-                    <IconLock
-                      aria-hidden="true"
-                      className="size-4 shrink-0"
-                      stroke={1.7}
-                    />
+                    <span className="text-xs">-</span>
                   )}
-                  <span className="truncate font-medium">
-                    {item.visibilityLabel}
-                  </span>
-                  </div>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-col gap-1">
-                  <span className="whitespace-nowrap font-medium">
-                    {item.dateLabel}
-                  </span>
-                  <span
-                    className={cn(
-                      "whitespace-nowrap text-xs text-muted-foreground",
-                      isInterruptedUpload(item, activeUpload) &&
-                        "text-destructive",
-                    )}
-                  >
-                    {isInterruptedUpload(item, activeUpload)
-                      ? "Interrompido"
-                      : item.statusLabel}
-                  </span>
-                </div>
-              </TableCell>
-              {item.uploadStatus === "uploading" && item.vimeoId ? (
-                <TableCell colSpan={2} className="text-right">
-                  <div className="flex justify-end gap-2">
-                    {isInterruptedUpload(item, activeUpload) ? (
-                      <>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={
-                            resumingId !== null ||
-                            cancellingId === item.id ||
-                            deletingId === item.id
-                          }
-                          onClick={() => requestResume(item)}
+                </TableCell>
+                <TableCell>
+                  {item.uploadStatus === "ready" ? (
+                    <Popover
+                      open={pendingVisibility?.id === item.id}
+                      onOpenChange={(open) => {
+                        if (open) {
+                          openVisibilityDialog(item);
+                        } else if (!updateVisibility.isPending) {
+                          setPendingVisibility(null);
+                          setSelectedPrivacy(null);
+                        }
+                      }}
+                    >
+                      <HoverCard>
+                        <HoverCardTrigger
+                          render={<span className="inline-flex" />}
                         >
-                          <IconRefresh
-                            data-icon="inline-start"
-                            aria-hidden="true"
-                          />
-                          {resumingId === item.id
-                            ? "Retomando..."
-                            : "Retomar envio"}
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          disabled={deletingId !== null || resumingId !== null}
-                          onClick={() => setPendingDeletion(item)}
+                          <PopoverTrigger
+                            render={
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="lg"
+                                className="max-w-full justify-start"
+                                disabled={
+                                  updateVisibility.isPending &&
+                                  updateVisibility.variables?.item.id ===
+                                    item.id
+                                }
+                              />
+                            }
+                            aria-label={`${item.visibilityLabel}. Alterar visibilidade de ${item.title}`}
+                          >
+                            {item.privacy === 0 ? (
+                              <IconWorld
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                              />
+                            ) : (
+                              <IconLock
+                                data-icon="inline-start"
+                                aria-hidden="true"
+                              />
+                            )}
+                            <span className="truncate">
+                              {item.visibilityLabel}
+                            </span>
+                          </PopoverTrigger>
+                        </HoverCardTrigger>
+                        <HoverCardContent
+                          align="start"
+                          side="top"
+                          className="flex w-80 flex-col gap-2 p-3"
                         >
-                          <IconTrash
-                            data-icon="inline-start"
-                            aria-hidden="true"
-                          />
-                          {deletingId === item.id
-                            ? "Excluindo..."
-                            : "Excluir vídeo"}
-                        </Button>
-                      </>
-                    ) : null}
-                    {!isInterruptedUpload(item, activeUpload) ? (
-                      <Button
-                        type="button"
-                        variant="outline"
-                        size="sm"
-                        disabled={cancellingId === item.id}
-                        onClick={() => setPendingCancellation(item)}
+                          <p className="font-medium">
+                            {item.privacy === 0
+                              ? "Este vídeo está público"
+                              : "Este vídeo está privado"}
+                          </p>
+                          <p className="text-muted-foreground">
+                            {item.privacy === 0
+                              ? "Os alunos com acesso à Academia podem encontrar e assistir a este vídeo."
+                              : "Este vídeo não fica disponível no catálogo público da Academia."}
+                          </p>
+                        </HoverCardContent>
+                      </HoverCard>
+                      <PopoverContent
+                        align="start"
+                        side="bottom"
+                        sideOffset={6}
+                        className="w-96 gap-4 p-4"
                       >
-                        {cancellingId === item.id
-                          ? "Cancelando..."
-                          : "Cancelar envio"}
-                      </Button>
-                    ) : null}
+                        <PopoverHeader>
+                          <PopoverTitle>Visibilidade do vídeo</PopoverTitle>
+                          <PopoverDescription>
+                            Defina quem poderá encontrar e assistir a este
+                            conteúdo.
+                          </PopoverDescription>
+                        </PopoverHeader>
+                        <FieldSet className="rounded-lg border p-4">
+                          <FieldLegend>Salvar ou publicar</FieldLegend>
+                          <RadioGroup
+                            value={String(selectedPrivacy ?? item.privacy)}
+                            onValueChange={(value) =>
+                              setSelectedPrivacy(value === "1" ? 1 : 0)
+                            }
+                            className="gap-4"
+                          >
+                            <Field orientation="horizontal">
+                              <RadioGroupItem
+                                value="1"
+                                id={`content-visibility-private-${item.id}`}
+                              />
+                              <FieldLabel
+                                htmlFor={`content-visibility-private-${item.id}`}
+                              >
+                                Privado
+                              </FieldLabel>
+                            </Field>
+                            <Field orientation="horizontal">
+                              <RadioGroupItem
+                                value="0"
+                                id={`content-visibility-public-${item.id}`}
+                              />
+                              <FieldLabel
+                                htmlFor={`content-visibility-public-${item.id}`}
+                              >
+                                Público
+                              </FieldLabel>
+                            </Field>
+                          </RadioGroup>
+                        </FieldSet>
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            disabled={updateVisibility.isPending}
+                            onClick={() => {
+                              setPendingVisibility(null);
+                              setSelectedPrivacy(null);
+                            }}
+                          >
+                            Cancelar
+                          </Button>
+                          <Button
+                            type="button"
+                            disabled={
+                              updateVisibility.isPending ||
+                              selectedPrivacy === null ||
+                              selectedPrivacy === pendingVisibility?.privacy
+                            }
+                            onClick={() => void saveVisibility()}
+                          >
+                            {updateVisibility.isPending
+                              ? "Salvando..."
+                              : "Salvar"}
+                          </Button>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  ) : (
+                    <div className="flex min-w-0 items-center gap-2">
+                      {isTransientUploadStatus(item.uploadStatus) ? (
+                        <IconClock
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                          stroke={1.7}
+                        />
+                      ) : (
+                        <IconLock
+                          aria-hidden="true"
+                          className="size-4 shrink-0"
+                          stroke={1.7}
+                        />
+                      )}
+                      <span className="truncate font-medium">
+                        {item.visibilityLabel}
+                      </span>
+                    </div>
+                  )}
+                </TableCell>
+                <TableCell>
+                  <div className="flex flex-col gap-1">
+                    <span className="whitespace-nowrap font-medium">
+                      {item.dateLabel}
+                    </span>
+                    <span
+                      className={cn(
+                        "whitespace-nowrap text-xs text-muted-foreground",
+                        isInterruptedUpload(item, activeUpload) &&
+                          "text-destructive",
+                      )}
+                    >
+                      {isInterruptedUpload(item, activeUpload)
+                        ? "Interrompido"
+                        : item.statusLabel}
+                    </span>
                   </div>
                 </TableCell>
-              ) : (
-                <>
-                  <TableCell className="text-right">
-                    {formatStudioNumber(item.views)}
+                {item.uploadStatus === "uploading" && item.vimeoId ? (
+                  <TableCell colSpan={2} className="text-right">
+                    <div className="flex justify-end gap-2">
+                      {isInterruptedUpload(item, activeUpload) ? (
+                        <>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              resumingId !== null ||
+                              cancellingId === item.id ||
+                              deletingId === item.id
+                            }
+                            onClick={() => requestResume(item)}
+                          >
+                            <IconRefresh
+                              data-icon="inline-start"
+                              aria-hidden="true"
+                            />
+                            {resumingId === item.id
+                              ? "Retomando..."
+                              : "Retomar envio"}
+                          </Button>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            disabled={
+                              deletingId !== null || resumingId !== null
+                            }
+                            onClick={() => setPendingDeletion(item)}
+                          >
+                            <IconTrash
+                              data-icon="inline-start"
+                              aria-hidden="true"
+                            />
+                            {deletingId === item.id
+                              ? "Excluindo..."
+                              : "Excluir vídeo"}
+                          </Button>
+                        </>
+                      ) : null}
+                      {!isInterruptedUpload(item, activeUpload) ? (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={cancellingId === item.id}
+                          onClick={() => setPendingCancellation(item)}
+                        >
+                          {cancellingId === item.id
+                            ? "Cancelando..."
+                            : "Cancelar envio"}
+                        </Button>
+                      ) : null}
+                    </div>
                   </TableCell>
-                  <TableCell className="text-right">
-                    {formatStudioNumber(item.comments)}
-                  </TableCell>
-                </>
-              )}
-            </TableRow>
-          ))}
-        </TableBody>
-      </Table>
+                ) : (
+                  <>
+                    <TableCell className="text-right">
+                      {formatStudioNumber(item.views)}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      {formatStudioNumber(item.comments)}
+                    </TableCell>
+                  </>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
 
       <Dialog
@@ -912,7 +917,11 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <DialogClose render={<Button variant="outline" disabled={cancellingId !== null} />}>
+            <DialogClose
+              render={
+                <Button variant="outline" disabled={cancellingId !== null} />
+              }
+            >
               Continuar envio
             </DialogClose>
             <Button
@@ -943,7 +952,9 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
           </DialogHeader>
           <DialogFooter>
             <DialogClose
-              render={<Button variant="outline" disabled={deletingId !== null} />}
+              render={
+                <Button variant="outline" disabled={deletingId !== null} />
+              }
             >
               Manter vídeo
             </DialogClose>
@@ -958,7 +969,6 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
     </>
   );
 }
