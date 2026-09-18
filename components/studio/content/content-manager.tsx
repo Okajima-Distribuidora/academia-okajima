@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  IconAlertTriangle,
   IconChartBar,
   IconClock,
   IconDotsVertical,
@@ -8,16 +9,21 @@ import {
   IconMessageCircle,
   IconPencil,
   IconPlayerPlay,
+  IconRefresh,
+  IconTrash,
   IconUpload,
   IconVideo,
   IconWorld,
 } from "@tabler/icons-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { useRef, useState } from "react";
 
+import { VideoWarningIcons } from "@/components/studio/content/video-warning-icons";
 import { StudioPageHeader } from "@/components/studio/layout/studio-page-header";
+import {
+  useVideoUploadState,
+} from "@/components/studio/uploads/video-upload-dialog";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -76,10 +82,8 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/components/ui/toast";
 import {
-  useVideoUploadState,
-} from "@/components/studio/uploads/video-upload-dialog";
-import {
   useCancelStudioUpload,
+  useDeleteStudioVideo,
   useStudioContent,
   useUpdateStudioVisibility,
 } from "@/hooks/queries/use-studio-content";
@@ -91,9 +95,11 @@ import type {
 } from "@/lib/studio/content/contracts";
 import {
   getUploadProgressLabel,
+  isInterruptedUpload,
   isTransientUploadStatus,
   mergeActiveUpload,
 } from "@/lib/studio/content/upload-view";
+import { cn } from "@/lib/utils";
 
 const tabs = [
   { value: "videos", label: "Vídeos" },
@@ -107,7 +113,6 @@ export function ContentManager({
   activeType: StudioContentType;
   content: StudioContentPage;
 }) {
-  const router = useRouter();
   const { activeUpload } = useVideoUploadState();
   const { data } = useStudioContent({
     type: activeType,
@@ -293,17 +298,28 @@ function getVisiblePages(
 }
 
 function ContentTable({ items }: { items: StudioContentItem[] }) {
-  const { cancelUploadById } = useVideoUploadState();
+  const { activeUpload, cancelUploadById, resumeUploadById } =
+    useVideoUploadState();
   const cancelUpload = useCancelStudioUpload();
+  const deleteVideo = useDeleteStudioVideo();
   const updateVisibility = useUpdateStudioVisibility();
+  const resumeInputRef = useRef<HTMLInputElement>(null);
   const [pendingCancellation, setPendingCancellation] =
+    useState<StudioContentItem | null>(null);
+  const [pendingDeletion, setPendingDeletion] =
     useState<StudioContentItem | null>(null);
   const [pendingVisibility, setPendingVisibility] =
     useState<StudioContentItem | null>(null);
   const [selectedPrivacy, setSelectedPrivacy] =
     useState<StudioVideoPrivacy | null>(null);
+  const [pendingResume, setPendingResume] =
+    useState<StudioContentItem | null>(null);
+  const [resumingId, setResumingId] = useState<number | null>(null);
   const cancellingId = cancelUpload.isPending
     ? (cancelUpload.variables?.item.id ?? null)
+    : null;
+  const deletingId = deleteVideo.isPending
+    ? (deleteVideo.variables?.item.id ?? null)
     : null;
 
   async function confirmCancellation() {
@@ -323,6 +339,70 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
         description: "O estado do vídeo será atualizado novamente.",
         type: "error",
       });
+    }
+  }
+
+  async function confirmDeletion() {
+    if (!pendingDeletion || deletingId !== null) return;
+
+    try {
+      await deleteVideo.mutateAsync({ item: pendingDeletion });
+      setPendingDeletion(null);
+      toast.add({
+        title: "Vídeo excluído",
+        description: "O registro foi removido da lista de conteúdo.",
+        type: "success",
+      });
+    } catch {
+      toast.add({
+        title: "Não foi possível excluir o vídeo",
+        description: "O vídeo continua disponível na lista.",
+        type: "error",
+      });
+    }
+  }
+
+  function requestResume(item: StudioContentItem) {
+    setPendingResume(item);
+    resumeInputRef.current?.click();
+  }
+
+  async function resumeSelectedUpload(file: File) {
+    if (!pendingResume?.vimeoId || resumingId !== null) return;
+    const vimeoVideoId = pendingResume.vimeoId;
+    const item = pendingResume;
+    setResumingId(item.id);
+
+    try {
+      await resumeUploadById(
+        {
+          databaseVideoId: item.id,
+          vimeoVideoId,
+          title: item.title,
+          description:
+            item.description === "Sem descrição" ? "" : item.description,
+          fileSize: item.fileSize,
+          subcategoryIds: item.subcategoryIds,
+        },
+        file,
+      );
+      toast.add({
+        title: "Envio retomado",
+        description: "O vídeo continuará do último trecho confirmado pelo Vimeo.",
+        type: "success",
+      });
+      setPendingResume(null);
+    } catch (error) {
+      toast.add({
+        title: "Não foi possível retomar o envio",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Selecione novamente o arquivo original.",
+        type: "error",
+      });
+    } finally {
+      setResumingId(null);
     }
   }
 
@@ -359,6 +439,19 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
 
   return (
     <>
+      <input
+        ref={resumeInputRef}
+        type="file"
+        accept="video/*"
+        className="sr-only"
+        tabIndex={-1}
+        aria-hidden="true"
+        onChange={(event) => {
+          const selectedFile = event.target.files?.[0];
+          if (selectedFile) void resumeSelectedUpload(selectedFile);
+          event.target.value = "";
+        }}
+      />
       <div className="min-w-0 flex-1 overflow-x-auto">
       <Table className="min-w-[72rem] table-fixed">
         <TableHeader>
@@ -394,8 +487,16 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
               </TableCell>
               <TableCell className="min-w-0">
                 <div className="flex min-w-0 items-start gap-3">
-                  <span className="relative grid aspect-video w-28 shrink-0 place-items-center overflow-hidden rounded-md bg-muted">
-                    {item.thumbnailUrl ? (
+                  <span
+                    className={cn(
+                      "relative grid aspect-video w-28 shrink-0 place-items-center overflow-hidden rounded-md bg-muted",
+                      isInterruptedUpload(item, activeUpload) &&
+                        "bg-destructive/10 text-destructive",
+                    )}
+                  >
+                    {isInterruptedUpload(item, activeUpload) ? (
+                      <IconAlertTriangle aria-hidden="true" stroke={1.7} />
+                    ) : item.thumbnailUrl ? (
                       <Image
                         src={item.thumbnailUrl}
                         alt=""
@@ -406,7 +507,8 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                     ) : (
                       <IconVideo aria-hidden="true" stroke={1.7} />
                     )}
-                    {item.duration ? (
+                    {item.duration &&
+                    !isInterruptedUpload(item, activeUpload) ? (
                       <span className="absolute right-1 bottom-1 rounded-sm bg-foreground px-1 py-0.5 text-[0.6875rem] font-semibold leading-none text-background">
                         {item.duration}
                       </span>
@@ -427,9 +529,29 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                     )}
                     <div className="h-7 min-w-0">
                       {item.uploadStatus === "uploading" ? (
-                        <div className="flex h-7 min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                          <IconUpload aria-hidden="true" className="size-4 shrink-0" />
-                          <span className="truncate">{getUploadProgressLabel(item)}</span>
+                        <div
+                          className={cn(
+                            "flex h-7 min-w-0 items-center gap-2 text-xs text-muted-foreground",
+                            isInterruptedUpload(item, activeUpload) &&
+                              "text-destructive",
+                          )}
+                        >
+                          {isInterruptedUpload(item, activeUpload) ? (
+                            <IconAlertTriangle
+                              aria-hidden="true"
+                              className="size-4 shrink-0"
+                            />
+                          ) : (
+                            <IconUpload
+                              aria-hidden="true"
+                              className="size-4 shrink-0"
+                            />
+                          )}
+                          <span className="truncate">
+                            {isInterruptedUpload(item, activeUpload)
+                              ? "Envio interrompido"
+                              : getUploadProgressLabel(item)}
+                          </span>
                         </div>
                       ) : item.uploadStatus === "processing" ? (
                         <div className="flex h-7 items-center gap-2 text-xs text-muted-foreground">
@@ -471,6 +593,12 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                         <Button
                           variant="ghost"
                           size="icon-sm"
+                          nativeButton={false}
+                          render={
+                            <Link
+                              href={`/studio/conteudo/${item.publicId}?aba=comentarios`}
+                            />
+                          }
                           aria-label={`Ver comentários de ${item.title}`}
                         >
                           <IconMessageCircle
@@ -505,11 +633,24 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                 </div>
               </TableCell>
               <TableCell className="text-muted-foreground">
-                <span className="block text-xs leading-snug">
-                  {isTransientUploadStatus(item.uploadStatus)
-                    ? "As verificações começarão após o envio"
-                    : "-"}
-                </span>
+                {isInterruptedUpload(item, activeUpload) ? (
+                  <div className="flex max-w-64 flex-col gap-1">
+                    <span className="text-xs font-medium text-destructive">
+                      Envio interrompido
+                    </span>
+                    <span className="text-xs leading-snug text-muted-foreground">
+                      Selecione novamente o arquivo original para continuar.
+                    </span>
+                  </div>
+                ) : isTransientUploadStatus(item.uploadStatus) ? (
+                  <span className="block text-xs leading-snug">
+                    As verificações começarão após o envio
+                  </span>
+                ) : item.uploadStatus === "ready" ? (
+                  <VideoWarningIcons warnings={item.warnings} />
+                ) : (
+                  <span className="text-xs">-</span>
+                )}
               </TableCell>
               <TableCell>
                 {item.uploadStatus === "ready" ? (
@@ -671,22 +812,74 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
                   <span className="whitespace-nowrap font-medium">
                     {item.dateLabel}
                   </span>
-                  <span className="whitespace-nowrap text-xs text-muted-foreground">
-                    {item.statusLabel}
+                  <span
+                    className={cn(
+                      "whitespace-nowrap text-xs text-muted-foreground",
+                      isInterruptedUpload(item, activeUpload) &&
+                        "text-destructive",
+                    )}
+                  >
+                    {isInterruptedUpload(item, activeUpload)
+                      ? "Interrompido"
+                      : item.statusLabel}
                   </span>
                 </div>
               </TableCell>
               {item.uploadStatus === "uploading" && item.vimeoId ? (
                 <TableCell colSpan={2} className="text-right">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    disabled={cancellingId === item.id}
-                    onClick={() => setPendingCancellation(item)}
-                  >
-                    {cancellingId === item.id ? "Cancelando..." : "Cancelar envio"}
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    {isInterruptedUpload(item, activeUpload) ? (
+                      <>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={
+                            resumingId !== null ||
+                            cancellingId === item.id ||
+                            deletingId === item.id
+                          }
+                          onClick={() => requestResume(item)}
+                        >
+                          <IconRefresh
+                            data-icon="inline-start"
+                            aria-hidden="true"
+                          />
+                          {resumingId === item.id
+                            ? "Retomando..."
+                            : "Retomar envio"}
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          disabled={deletingId !== null || resumingId !== null}
+                          onClick={() => setPendingDeletion(item)}
+                        >
+                          <IconTrash
+                            data-icon="inline-start"
+                            aria-hidden="true"
+                          />
+                          {deletingId === item.id
+                            ? "Excluindo..."
+                            : "Excluir vídeo"}
+                        </Button>
+                      </>
+                    ) : null}
+                    {!isInterruptedUpload(item, activeUpload) ? (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={cancellingId === item.id}
+                        onClick={() => setPendingCancellation(item)}
+                      >
+                        {cancellingId === item.id
+                          ? "Cancelando..."
+                          : "Cancelar envio"}
+                      </Button>
+                    ) : null}
+                  </div>
                 </TableCell>
               ) : (
                 <>
@@ -729,6 +922,38 @@ function ContentTable({ items }: { items: StudioContentItem[] }) {
               onClick={() => void confirmCancellation()}
             >
               {cancellingId !== null ? "Cancelando..." : "Cancelar envio"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={pendingDeletion !== null}
+        onOpenChange={(open) => {
+          if (!open && deletingId === null) setPendingDeletion(null);
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>Excluir vídeo?</DialogTitle>
+            <DialogDescription>
+              O vídeo será removido do Vimeo e deixará de aparecer no Studio. O
+              registro permanecerá no banco como excluído.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose
+              render={<Button variant="outline" disabled={deletingId !== null} />}
+            >
+              Manter vídeo
+            </DialogClose>
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={deletingId !== null}
+              onClick={() => void confirmDeletion()}
+            >
+              {deletingId !== null ? "Excluindo..." : "Excluir vídeo"}
             </Button>
           </DialogFooter>
         </DialogContent>

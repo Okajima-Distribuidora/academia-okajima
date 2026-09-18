@@ -79,6 +79,10 @@ type UpdateVisibilityInput = {
   privacy: StudioVideoPrivacy;
 };
 
+type DeleteVideoInput = {
+  item: StudioContentItem;
+};
+
 export function useUpdateStudioVisibility() {
   const queryClient = useQueryClient();
 
@@ -158,6 +162,41 @@ export function useCancelStudioUpload() {
   });
 }
 
+export function useDeleteStudioVideo() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ item }: DeleteVideoInput) =>
+      apiRequest<void>(
+        `/api/studio/content/${encodeURIComponent(item.publicId)}`,
+        { method: "DELETE" },
+      ),
+    onMutate: async ({ item }) => {
+      await queryClient.cancelQueries({
+        queryKey: queryKeys.studio.content.all,
+      });
+      const snapshots = queryClient.getQueriesData<StudioContentPage>({
+        queryKey: queryKeys.studio.content.all,
+      });
+      queryClient.setQueriesData<StudioContentPage>(
+        { queryKey: queryKeys.studio.content.all },
+        (current) => removeContentItem(current, item.id),
+      );
+      return { snapshots };
+    },
+    onError: (_error, _variables, context) => {
+      for (const [key, data] of context?.snapshots ?? []) {
+        queryClient.setQueryData(key, data);
+      }
+    },
+    onSettled: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: queryKeys.studio.content.all,
+      });
+    },
+  });
+}
+
 function updateCancellingItem(
   current: StudioContentPage | undefined,
   itemId: number,
@@ -211,5 +250,23 @@ function updateCancelledItem(
           }
         : item,
     ),
+  };
+}
+
+function removeContentItem(
+  current: StudioContentPage | undefined,
+  itemId: number,
+) {
+  if (!current) return current;
+
+  const items = current.items.filter((item) => item.id !== itemId);
+  if (items.length === current.items.length) return current;
+
+  const totalItems = Math.max(0, current.totalItems - 1);
+  return {
+    ...current,
+    items,
+    totalItems,
+    totalPages: Math.max(1, Math.ceil(totalItems / current.pageSize)),
   };
 }

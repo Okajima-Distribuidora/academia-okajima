@@ -4,7 +4,12 @@ import { sql } from "kysely";
 
 import { getDb } from "@/lib/db";
 import type { VideoUploadStatus } from "@/lib/db/types";
-import { decodeLegacyText, extractVimeoId } from "@/lib/home/catalog";
+import {
+  decodeLegacyText,
+  extractVimeoId,
+  listVideoComments,
+  type VideoComment,
+} from "@/lib/home/catalog";
 import type {
   StudioContentItem,
   StudioContentPage,
@@ -12,10 +17,15 @@ import type {
   StudioVideoPrivacy,
 } from "@/lib/studio/content/contracts";
 import {
+  getStudioVideoWarnings,
+  type StudioVideoWarning,
+} from "@/lib/studio/content/warnings";
+import {
   getVimeoVideoPresentation,
   listVimeoVideoThumbnails,
   type VimeoVideoThumbnail,
 } from "@/lib/vimeo/videos";
+import { deleteVimeoVideo } from "@/lib/vimeo/uploads";
 
 export const STUDIO_CONTENT_PAGE_SIZE = 30;
 
@@ -43,6 +53,8 @@ export interface StudioVideoDetails {
   thumbnails: VimeoVideoThumbnail[];
   selectedSubcategoryId: number | null;
   categoryLabel: string | null;
+  commentsList: VideoComment[];
+  warnings: StudioVideoWarning[];
 }
 
 export function getStudioContentType(
@@ -115,6 +127,8 @@ export async function listStudioContent(
     .where("videos.is_movie", "=", 0)
     .where("videos.live_time", "=", 0)
     .where("videos.is_short", "=", isShort)
+    .where("videos.upload_status", "!=", "deleted")
+    .where("videos.deleted_at", "is", null)
     .executeTakeFirst();
   const totalItems = Number(totalRow?.total ?? 0);
   const totalPages = Math.max(
@@ -132,6 +146,7 @@ export async function listStudioContent(
       "videos.description",
       "videos.thumbnail",
       "videos.duration",
+      "videos.size",
       "videos.vimeo",
       "videos.video_location",
       "videos.time",
@@ -162,10 +177,19 @@ export async function listStudioContent(
         .where("likes_dislikes.type", "=", 1)
         .as("likes"),
     )
+    .select((eb) =>
+      eb
+        .selectFrom("academy_video_subcategories")
+        .select(({ fn }) => fn.countAll<number>().as("total"))
+        .whereRef("academy_video_subcategories.video_id", "=", "videos.id")
+        .as("categoryLinks"),
+    )
     .where("videos.converted", "!=", 2)
     .where("videos.is_movie", "=", 0)
     .where("videos.live_time", "=", 0)
-    .where("videos.is_short", "=", isShort);
+    .where("videos.is_short", "=", isShort)
+    .where("videos.upload_status", "!=", "deleted")
+    .where("videos.deleted_at", "is", null);
 
   contentQuery = contentQuery
     .orderBy(
@@ -179,6 +203,25 @@ export async function listStudioContent(
     .offset((page - 1) * STUDIO_CONTENT_PAGE_SIZE)
     .execute();
 
+  const subcategoryLinks =
+    rows.length > 0
+      ? await db
+          .selectFrom("academy_video_subcategories")
+          .select(["video_id", "subcategory_id"])
+          .where(
+            "video_id",
+            "in",
+            rows.map((video) => video.id),
+          )
+          .execute()
+      : [];
+  const subcategoryIdsByVideo = new Map<number, number[]>();
+  for (const link of subcategoryLinks) {
+    const current = subcategoryIdsByVideo.get(link.video_id) ?? [];
+    current.push(link.subcategory_id);
+    subcategoryIdsByVideo.set(link.video_id, current);
+  }
+
   const shouldResolveVimeo = options.resolveVimeoPresentation ?? true;
   const items = await Promise.all(
     rows.map(async (video) => {
@@ -191,13 +234,15 @@ export async function listStudioContent(
       const uploadStatus = video.upload_status;
       const isPending =
         uploadStatus === "uploading" || uploadStatus === "processing";
+      const description = decodeLegacyText(video.description?.trim() ?? "");
+      const thumbnailUrl =
+        vimeo?.thumbnailUrl ?? getPersistedThumbnailUrl(video.thumbnail);
 
       return {
         id: video.id,
         publicId: video.video_id,
         title: decodeLegacyText(video.title.trim()) || "Sem título",
-        description:
-          decodeLegacyText(video.description?.trim() ?? "") || "Sem descrição",
+        description: description || "Sem descrição",
         duration: video.duration.trim(),
         privacy: normalizeEditablePrivacy(video.privacy),
         visibilityLabel: isPending
@@ -208,8 +253,9 @@ export async function listStudioContent(
         views: Math.max(0, video.views),
         comments: Number(video.comments ?? 0),
         likes: Number(video.likes ?? 0),
-        thumbnailUrl:
-          vimeo?.thumbnailUrl ?? getPersistedThumbnailUrl(video.thumbnail),
+        thumbnailUrl,
+        fileSize: Number(video.size),
+        subcategoryIds: subcategoryIdsByVideo.get(video.id) ?? [],
         vimeoId,
         uploadStatus,
         uploadStartedAt: video.upload_started_at.toISOString(),
@@ -217,6 +263,10 @@ export async function listStudioContent(
         processingStartedAt: video.processing_started_at?.toISOString() ?? null,
         readyAt: video.ready_at?.toISOString() ?? null,
         cancelledAt: video.cancelled_at?.toISOString() ?? null,
+        warnings: getStudioVideoWarnings({
+          hasCategory: Number(video.categoryLinks ?? 0) > 0,
+          description,
+        }),
       };
     }),
   );
@@ -280,6 +330,7 @@ export async function getStudioVideoDetails(
       "videos.video_id",
       "videos.title",
       "videos.description",
+      "videos.thumbnail",
       "videos.duration",
       "videos.vimeo",
       "videos.video_location",
@@ -309,6 +360,8 @@ export async function getStudioVideoDetails(
     .where("videos.converted", "!=", 2)
     .where("videos.is_movie", "=", 0)
     .where("videos.live_time", "=", 0)
+    .where("videos.upload_status", "!=", "deleted")
+    .where("videos.deleted_at", "is", null)
     .executeTakeFirst();
 
   if (!video) return null;
@@ -336,19 +389,23 @@ export async function getStudioVideoDetails(
     .orderBy("academy_subcategories.name", "asc")
     .executeTakeFirst();
   const vimeoId = extractVimeoId(video.vimeo, video.video_location);
-  const [vimeo, thumbnails] = vimeoId
+  const [vimeo, thumbnails, commentsList] = vimeoId
     ? await Promise.all([
         getVimeoVideoPresentation(vimeoId),
         listVimeoVideoThumbnails(vimeoId),
+        listVideoComments(video.id),
       ])
-    : [null, []];
+    : [null, [], await listVideoComments(video.id)];
   const date = Math.max(video.publication_date, video.time);
+  const description = decodeLegacyText(video.description?.trim() ?? "");
+  const thumbnailUrl =
+    vimeo?.thumbnailUrl ?? getPersistedThumbnailUrl(video.thumbnail);
 
   return {
     id: video.id,
     publicId: video.video_id,
     title: decodeLegacyText(video.title.trim()) || "Sem título",
-    description: decodeLegacyText(video.description?.trim() ?? ""),
+    description,
     duration: video.duration.trim(),
     privacy: normalizeEditablePrivacy(video.privacy),
     visibilityLabel: getStudioVisibilityLabel(video.privacy),
@@ -358,13 +415,58 @@ export async function getStudioVideoDetails(
     comments: Number(video.comments ?? 0),
     likes: Number(video.likes ?? 0),
     vimeoId,
-    thumbnailUrl: vimeo?.thumbnailUrl ?? null,
+    thumbnailUrl,
     thumbnails,
     selectedSubcategoryId: selectedSubcategory?.subcategory_id ?? null,
     categoryLabel: selectedSubcategory
       ? `${decodeLegacyText(selectedSubcategory.categoryName.trim())} / ${decodeLegacyText(selectedSubcategory.subcategoryName.trim())}`
       : null,
+    commentsList,
+    warnings: getStudioVideoWarnings({
+      hasCategory: Boolean(selectedSubcategory),
+      description,
+    }),
   };
+}
+
+export async function deleteStudioVideo(publicId: string): Promise<boolean> {
+  const db = getDb();
+  const video = await db
+    .selectFrom("videos")
+    .select([
+      "id",
+      "vimeo",
+      "video_location",
+      "upload_status",
+      "deleted_at",
+    ])
+    .where("video_id", "=", publicId)
+    .where("converted", "!=", 2)
+    .where("is_movie", "=", 0)
+    .where("live_time", "=", 0)
+    .executeTakeFirst();
+
+  if (!video) return false;
+  if (video.upload_status === "deleted" || video.deleted_at) return true;
+
+  const vimeoId = extractVimeoId(video.vimeo, video.video_location);
+  if (vimeoId) await deleteVimeoVideo(vimeoId);
+
+  const now = new Date();
+  await db
+    .updateTable("videos")
+    .set({
+      active: 0,
+      upload_status: "deleted",
+      upload_status_updated_at: now,
+      deleted_at: now,
+    })
+    .where("id", "=", video.id)
+    .where("upload_status", "=", video.upload_status)
+    .where("deleted_at", "is", null)
+    .executeTakeFirst();
+
+  return true;
 }
 
 export async function updateStudioVideoDetails(
@@ -374,6 +476,7 @@ export async function updateStudioVideoDetails(
   const title = readOptionalText(formData, "title").slice(0, 100);
   const description = readOptionalText(formData, "description");
   const privacy = Number(formData.get("privacy"));
+  const shouldUpdateSubcategory = formData.has("subcategoryId");
   const subcategoryId = readOptionalNumber(formData, "subcategoryId");
 
   if (!title) {
@@ -391,13 +494,14 @@ export async function updateStudioVideoDetails(
     throw new Error("Vídeo não encontrado.");
   }
 
-  const safeSubcategoryId = subcategoryId
-    ? await db
-        .selectFrom("academy_subcategories")
-        .select("id")
-        .where("id", "=", subcategoryId)
-        .executeTakeFirst()
-    : null;
+  const safeSubcategoryId =
+    shouldUpdateSubcategory && subcategoryId
+      ? await db
+          .selectFrom("academy_subcategories")
+          .select("id")
+          .where("id", "=", subcategoryId)
+          .executeTakeFirst()
+      : null;
 
   await db.transaction().execute(async (trx) => {
     await trx
@@ -410,20 +514,22 @@ export async function updateStudioVideoDetails(
       .where("id", "=", video.id)
       .executeTakeFirst();
 
-    await trx
-      .deleteFrom("academy_video_subcategories")
-      .where("video_id", "=", video.id)
-      .execute();
-
-    if (safeSubcategoryId) {
+    if (shouldUpdateSubcategory) {
       await trx
-        .insertInto("academy_video_subcategories")
-        .values({
-          video_id: video.id,
-          subcategory_id: safeSubcategoryId.id,
-          created_at: new Date(),
-        })
-        .executeTakeFirst();
+        .deleteFrom("academy_video_subcategories")
+        .where("video_id", "=", video.id)
+        .execute();
+
+      if (safeSubcategoryId) {
+        await trx
+          .insertInto("academy_video_subcategories")
+          .values({
+            video_id: video.id,
+            subcategory_id: safeSubcategoryId.id,
+            created_at: new Date(),
+          })
+          .executeTakeFirst();
+      }
     }
   });
 }
