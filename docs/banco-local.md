@@ -31,6 +31,19 @@ Em outra maquina, crie `.env.docker.local` com `MYSQL_ROOT_PASSWORD`, `MYSQL_DAT
 
 Alterar as variaveis de inicializacao nao muda a senha nem o nome de um banco que ja existe no volume.
 
+## Prisma Studio
+
+O Prisma Client funciona contra o banco local, mas o Prisma Studio do Prisma 7
+nao abre no MySQL 5.7.44 usado por este Compose. A tela falha ao carregar
+metadados porque o Studio emite uma consulta com `WITH`, recurso disponivel no
+MySQL 8+, mas nao no MySQL 5.7.
+
+Use `npm run db:studio` em vez de chamar `prisma studio` diretamente. O script
+verifica a versao do servidor antes de abrir o Studio e mostra uma mensagem
+explicita quando o banco local legado ainda estiver em MySQL 5.7. Para navegar
+nesse banco local, use um cliente MySQL comum; para usar o Prisma Studio, rode-o
+contra uma copia em MySQL 8+.
+
 ## Importacao do schema
 
 O schema validado esta em `database/legacy-schema.sql`: 66 tabelas, sem registros. Ele foi obtido do arquivo `C:\Users\Okajima\Downloads\okaji169_academia.sql`, exportado em 02/09/2026. O original foi preservado. Apenas os comandos `CREATE DATABASE` e `USE` referentes ao banco original foram removidos da copia, com um comentario explicativo acrescentado no inicio.
