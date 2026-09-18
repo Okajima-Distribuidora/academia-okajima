@@ -23,7 +23,7 @@ O Compose cria recursos com o prefixo `academia-okajima-dev` e nao utiliza os ba
 - Credenciais de inicializacao do MySQL: `.env.docker.local`.
 - Aplicacao em outro servico do mesmo Compose: host `banco`, porta `3306`.
 
-Os dois arquivos de ambiente estao ignorados pelo Git. A URL nao deve ter o prefixo `NEXT_PUBLIC_`. A camada de acesso foi implementada em `lib/db` com Kysely/mysql2, pool compartilhado de ate 5 conexoes e validacao estrita deste destino local. Veja [Login local](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/login-local.md).
+Os dois arquivos de ambiente estao ignorados pelo Git. A URL nao deve ter o prefixo `NEXT_PUBLIC_`. A camada de acesso foi implementada em `lib/db` com Kysely/mysql2 e pool compartilhado de ate 5 conexoes. Veja [Login local](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/login-local.md).
 
 O banco de desenvolvimento ja tem uma conta ficticia `admin` provisionada separadamente. O arquivo SQL continua sendo somente estrutura. Iniciar o aplicativo nao importa o dump, cria contas ou regrava senhas.
 

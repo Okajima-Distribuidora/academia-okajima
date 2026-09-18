@@ -1,7 +1,6 @@
 import "server-only";
 
-// This milestone must never connect to the legacy/production database.
-export function localDatabaseConfig(value: string | undefined) {
+export function databaseConfig(value: string | undefined) {
   if (!value) throw new Error("DATABASE_URL não configurada.");
   let url: URL;
   try {
@@ -9,22 +8,25 @@ export function localDatabaseConfig(value: string | undefined) {
   } catch {
     throw new Error("DATABASE_URL inválida.");
   }
+  const port = Number(url.port || "3306");
+  const database = decodeURIComponent(url.pathname.slice(1));
   if (
     url.protocol !== "mysql:" ||
-    url.hostname !== "127.0.0.1" ||
-    url.port !== "3307" ||
-    url.pathname !== "/academia_local" ||
+    !url.hostname ||
+    !Number.isInteger(port) ||
+    port < 1 ||
+    port > 65535 ||
+    !database ||
     url.search ||
     url.hash ||
     !url.username ||
     !url.password
-  ) {
-    throw new Error("Este marco permite apenas o MySQL local esperado.");
-  }
+  )
+    throw new Error("DATABASE_URL inválida.");
   return {
     host: url.hostname,
-    port: 3307,
-    database: "academia_local",
+    port,
+    database,
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     charset: "utf8mb4",
