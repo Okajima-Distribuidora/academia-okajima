@@ -30,8 +30,11 @@ export function databaseConfig(value: string | undefined) {
     user: decodeURIComponent(url.username),
     password: decodeURIComponent(url.password),
     charset: "utf8mb4",
-    connectionLimit: 5,
-    maxIdle: 5,
+    // Vercel may run multiple serverless instances at once. Kysely and
+    // Prisma each own a pool, so keep each pool to one connection to stay
+    // within the shared MySQL account limit across instances.
+    connectionLimit: 1,
+    maxIdle: 1,
     idleTimeout: 60_000,
     connectTimeout: 5_000,
     waitForConnections: true,

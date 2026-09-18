@@ -411,7 +411,7 @@ test("o cache da política nova é reutilizado entre chamadas", () => {
 });
 test("aceita uma URL MySQL completa e recusa formatos inválidos", () => {
   const url = "mysql://synthetic:synthetic@127.0.0.1:3307/academia_local";
-  assert.equal(databaseConfig(url).connectionLimit, 5);
+  assert.equal(databaseConfig(url).connectionLimit, 1);
   assert.deepEqual(databaseConfig("mysql://user:pass@db.example.test:3306/production"), {
     host: "db.example.test",
     port: 3306,
@@ -419,8 +419,8 @@ test("aceita uma URL MySQL completa e recusa formatos inválidos", () => {
     user: "user",
     password: "pass",
     charset: "utf8mb4",
-    connectionLimit: 5,
-    maxIdle: 5,
+    connectionLimit: 1,
+    maxIdle: 1,
     idleTimeout: 60_000,
     connectTimeout: 5_000,
     waitForConnections: true,
