@@ -59,6 +59,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import type { StudioCategory } from "@/lib/studio/categories/types";
+import { selectTusUploadSession } from "@/lib/studio/uploads/resume";
 import { cn } from "@/lib/utils";
 
 export type UploadStatus =
@@ -109,6 +110,15 @@ export type ActiveVideoUpload = {
   remainingSeconds: number | null;
 };
 
+export type ResumableVideoUpload = {
+  databaseVideoId: number;
+  vimeoVideoId: string;
+  title: string;
+  description: string;
+  fileSize: number;
+  subcategoryIds: number[];
+};
+
 type VideoUploadDialogContextValue = {
   openDialog: () => void;
   activeUpload: ActiveVideoUpload | null;
@@ -116,6 +126,7 @@ type VideoUploadDialogContextValue = {
     databaseVideoId: number,
     vimeoVideoId: string,
   ) => Promise<void>;
+  resumeUploadById: (upload: ResumableVideoUpload, file: File) => Promise<void>;
 };
 
 const { TextArea: AntTextArea } = AntInput;
@@ -349,6 +360,106 @@ export function VideoUploadDialogProvider({
     setOpen(true);
   }
 
+  function createTusUpload(
+    video: File,
+    databaseVideoId: number,
+    videoId: string,
+    uploadUrl?: string,
+  ) {
+    const startedAt = performance.now();
+    let initialBytes: number | null = null;
+
+    return new Upload(video, {
+      ...(uploadUrl ? { uploadUrl } : {}),
+      metadata: {
+        databaseVideoId: String(databaseVideoId),
+        vimeoVideoId: videoId,
+      },
+      retryDelays: null,
+      storeFingerprintForResuming: true,
+      removeFingerprintOnSuccess: true,
+      onProgress(bytesUploaded, bytesTotal) {
+        initialBytes ??= bytesUploaded;
+        const nextProgress = Math.min(100, (bytesUploaded / bytesTotal) * 100);
+        const elapsedSeconds = (performance.now() - startedAt) / 1000;
+        const uploadedThisSession = Math.max(0, bytesUploaded - initialBytes);
+        const bytesPerSecond =
+          elapsedSeconds > 0 ? uploadedThisSession / elapsedSeconds : 0;
+        const secondsLeft =
+          bytesPerSecond > 0
+            ? Math.ceil((bytesTotal - bytesUploaded) / bytesPerSecond)
+            : null;
+
+        setStatus("uploading");
+        setProgress(nextProgress);
+        setRemainingSeconds(secondsLeft);
+      },
+      onSuccess() {
+        setStatus("processing");
+        setProgress(100);
+        setRemainingSeconds(0);
+        void monitorVimeoProcessing(databaseVideoId, videoId);
+      },
+      onError(error) {
+        console.error("[academia-vimeo] browser_upload_failed", error);
+        setStatus("error");
+        setErrorMessage("O envio falhou. Tente retomar o arquivo novamente.");
+        setRemainingSeconds(null);
+      },
+    });
+  }
+
+  async function resumeUploadById(
+    interruptedUpload: ResumableVideoUpload,
+    video: File,
+  ) {
+    if (uploadRef.current || status !== "idle") {
+      throw new Error("Já existe um envio ativo neste navegador.");
+    }
+    if (video.size !== interruptedUpload.fileSize) {
+      throw new Error("Selecione o mesmo arquivo usado no envio original.");
+    }
+
+    const upload = createTusUpload(
+      video,
+      interruptedUpload.databaseVideoId,
+      interruptedUpload.vimeoVideoId,
+    );
+    const previousUploads = await upload.findPreviousUploads();
+    const previousUpload = selectTusUploadSession(
+      previousUploads,
+      interruptedUpload,
+    );
+
+    if (!previousUpload) {
+      throw new Error(
+        "A sessão deste envio não foi encontrada neste navegador. Cancele o envio e comece novamente.",
+      );
+    }
+
+    setHistoryVisible(true);
+    setCurrentUploadId(crypto.randomUUID());
+    setViewingHistoryId(null);
+    setActiveStep("details");
+    setFile(video);
+    setTitle(interruptedUpload.title);
+    setDescription(interruptedUpload.description);
+    setSubcategoryIds(interruptedUpload.subcategoryIds);
+    setQuality(null);
+    setStatus("uploading");
+    setProgress(0);
+    setRemainingSeconds(null);
+    setErrorMessage(null);
+    databaseVideoIdRef.current = interruptedUpload.databaseVideoId;
+    vimeoVideoIdRef.current = interruptedUpload.vimeoVideoId;
+    cancelRequestedRef.current = false;
+    void detectVideoQuality(video).then(setQuality);
+
+    upload.resumeFromPreviousUpload(previousUpload);
+    uploadRef.current = upload;
+    upload.start();
+  }
+
   async function beginUpload(video: File) {
     const initialTitle = getTitleFromFilename(video.name);
     setHistoryVisible(true);
@@ -398,42 +509,12 @@ export function VideoUploadDialogProvider({
         return;
       }
 
-      const startedAt = performance.now();
-      const upload = new Upload(video, {
-        uploadUrl: result.uploadLink,
-        retryDelays: null,
-        storeFingerprintForResuming: false,
-        removeFingerprintOnSuccess: true,
-        onProgress(bytesUploaded, bytesTotal) {
-          const nextProgress = Math.min(
-            100,
-            (bytesUploaded / bytesTotal) * 100,
-          );
-          const elapsedSeconds = (performance.now() - startedAt) / 1000;
-          const bytesPerSecond =
-            elapsedSeconds > 0 ? bytesUploaded / elapsedSeconds : 0;
-          const secondsLeft =
-            bytesPerSecond > 0
-              ? Math.ceil((bytesTotal - bytesUploaded) / bytesPerSecond)
-              : null;
-
-          setStatus("uploading");
-          setProgress(nextProgress);
-          setRemainingSeconds(secondsLeft);
-        },
-        onSuccess() {
-          setStatus("processing");
-          setProgress(100);
-          setRemainingSeconds(0);
-          void monitorVimeoProcessing(databaseVideoId, videoId);
-        },
-        onError(error) {
-          console.error("[academia-vimeo] browser_upload_failed", error);
-          setStatus("error");
-          setErrorMessage("O envio falhou. Tente enviar o arquivo novamente.");
-          setRemainingSeconds(null);
-        },
-      });
+      const upload = createTusUpload(
+        video,
+        databaseVideoId,
+        videoId,
+        result.uploadLink,
+      );
 
       uploadRef.current = upload;
       upload.start();
@@ -579,7 +660,12 @@ export function VideoUploadDialogProvider({
 
   return (
     <VideoUploadDialogContext.Provider
-      value={{ openDialog, activeUpload, cancelUploadById }}
+      value={{
+        openDialog,
+        activeUpload,
+        cancelUploadById,
+        resumeUploadById,
+      }}
     >
       {children}
       <Dialog

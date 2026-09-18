@@ -123,7 +123,6 @@ async function fetchVimeoVideoPresentation(
 
     const sizes = parsed.data.pictures?.sizes ?? [];
     const largestPicture = selectLargestPicture(sizes);
-
     return {
       name: parsed.data.name,
       duration: parsed.data.duration,

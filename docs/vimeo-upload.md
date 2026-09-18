@@ -190,6 +190,22 @@ transcodificação, `automatic-thumbnail-available`, polling e reconciliação u
 a mesma rotina para selecionar a maior imagem retornada pelo Vimeo e persistir
 sua URL no banco.
 
+### Retomada após recarregar a página
+
+O navegador não conserva o objeto `File` depois de um reload, mas o
+`tus-js-client` persiste no armazenamento local a URL da sessão, o fingerprint
+do arquivo e os IDs do vídeo no banco e no Vimeo. Enquanto o transporte TUS
+estiver ativo, a porcentagem e o tempo restante continuam apenas em memória.
+
+Quando o banco ainda indica `uploading` e não existe transporte ativo no
+provider, a lista apresenta `Envio interrompido`. Para retomar, o usuário deve
+selecionar novamente o mesmo arquivo. O cliente valida o tamanho persistido,
+localiza a sessão pelo fingerprint e pelos dois IDs e chama
+`resumeFromPreviousUpload`; o Vimeo responde ao `HEAD` com o offset confirmado e
+o envio continua a partir desse ponto. Uma sessão ausente ou um arquivo
+incompatível não cria outro vídeo automaticamente: o usuário pode cancelar o
+registro atual e iniciar um novo envio.
+
 ### 6. Vídeo pronto no Studio
 
 Depois de `ready`, as consultas periódicas da lista usam a thumbnail persistida
