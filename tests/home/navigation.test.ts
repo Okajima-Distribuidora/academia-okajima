@@ -12,7 +12,7 @@ import {
 test("home: mantém a ordem e os destinos solicitados", () => {
   assert.deepEqual(
     homeSections.map(({ label }) => label),
-    ["Home", "Categoria", "Shorts", "Biblioteca", "Ajuda"],
+    ["Home", "Categoria", "Shorts", "Biblioteca"],
   );
   for (const section of homeSections) {
     assert.equal(getHomeSection(section.id).id, section.id);

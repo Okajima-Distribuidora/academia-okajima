@@ -20,6 +20,16 @@ export function shouldPollStudioContent(
   );
 }
 
+export function isInterruptedUpload(
+  item: StudioContentItem,
+  activeUpload: ActiveVideoUpload | null,
+) {
+  return (
+    item.uploadStatus === "uploading" &&
+    activeUpload?.databaseVideoId !== item.id
+  );
+}
+
 export function mergeActiveUpload(
   item: StudioContentItem,
   activeUpload: ActiveVideoUpload,

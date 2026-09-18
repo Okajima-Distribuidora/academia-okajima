@@ -1,6 +1,10 @@
 "use client";
 
-import { IconChevronLeft, IconChevronRight } from "@tabler/icons-react";
+import {
+  IconChevronLeft,
+  IconChevronRight,
+  IconTag,
+} from "@tabler/icons-react";
 import Link from "next/link";
 import {
   type ComponentType,
@@ -12,7 +16,13 @@ import {
 
 import { RecentVideoCardContent } from "@/components/home/recent-video-card-content";
 import { Button } from "@/components/ui/button";
+import {
+  Progress,
+  ProgressLabel,
+  ProgressValue,
+} from "@/components/ui/progress";
 import type { RecentVideo } from "@/lib/home/catalog";
+import type { ModuleProgress } from "@/lib/home/module-progress";
 import { videoWatchHref } from "@/lib/home/navigation";
 
 interface HeadingIconProps {
@@ -24,16 +34,18 @@ export function VideoCarousel({
   headingId,
   listId,
   title,
-  HeadingIcon,
+  HeadingIcon = IconTag,
   videos,
   categorySlug,
+  progress,
 }: {
   headingId: string;
   listId: string;
   title: string;
-  HeadingIcon: ComponentType<HeadingIconProps>;
+  HeadingIcon?: ComponentType<HeadingIconProps>;
   videos: RecentVideo[];
   categorySlug: string;
+  progress?: ModuleProgress;
 }) {
   const trackRef = useRef<HTMLUListElement>(null);
   const [canScrollBackward, setCanScrollBackward] = useState(false);
@@ -102,6 +114,15 @@ export function VideoCarousel({
         </span>
         <h2 id={headingId}>{title}</h2>
       </div>
+      {progress && progress.totalLessons > 0 ? (
+        <Progress value={progress.percentage} className="max-w-md">
+          <ProgressLabel>
+            {progress.completedLessons} de {progress.totalLessons} aulas
+            concluídas
+          </ProgressLabel>
+          <ProgressValue />
+        </Progress>
+      ) : null}
       <div className="home-recent-carousel">
         <ul
           ref={trackRef}

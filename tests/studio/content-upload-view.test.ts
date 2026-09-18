@@ -6,6 +6,7 @@ import type { StudioContentItem } from "../../lib/studio/content";
 import { getStudioStatusLabel } from "../../lib/studio/content";
 import {
   getUploadProgressLabel,
+  isInterruptedUpload,
   mergeActiveUpload,
   shouldPollStudioContent,
 } from "../../lib/studio/content/upload-view";
@@ -20,10 +21,13 @@ const item: StudioContentItem = {
   visibilityLabel: "Pendente",
   dateLabel: "15 set. 2026",
   statusLabel: "Enviando",
+  warnings: [],
   views: 0,
   comments: 0,
   likes: 0,
   thumbnailUrl: null,
+  fileSize: 1000,
+  subcategoryIds: [],
   vimeoId: "123456",
   uploadStatus: "uploading",
   uploadStartedAt: "2026-09-15T12:00:00.000Z",
@@ -85,6 +89,15 @@ test("polling para quando não há uploads transitórios", () => {
     false,
   );
   assert.equal(shouldPollStudioContent([item], null), true);
+});
+
+test("identifica um upload persistido sem transporte TUS ativo", () => {
+  assert.equal(isInterruptedUpload(item, null), true);
+  assert.equal(isInterruptedUpload(item, activeUpload()), false);
+  assert.equal(
+    isInterruptedUpload(item, activeUpload({ databaseVideoId: item.id + 1 })),
+    true,
+  );
 });
 
 test("status final segue a visibilidade e não o campo legado active", () => {

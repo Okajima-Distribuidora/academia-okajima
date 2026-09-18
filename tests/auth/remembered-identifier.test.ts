@@ -1,13 +1,21 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { readRememberedIdentifier, REMEMBERED_IDENTIFIER_KEY, saveRememberedIdentifier } from "../../lib/auth/remembered-identifier";
+import {
+  REMEMBERED_IDENTIFIER_KEY,
+  readRememberedIdentifier,
+  saveRememberedIdentifier,
+} from "../../lib/auth/remembered-identifier";
 
 function fixture() {
   const data = new Map<string, string>();
   const storage = {
     getItem: (key: string) => data.get(key) ?? null,
-    setItem: (key: string, value: string) => { data.set(key, value); },
-    removeItem: (key: string) => { data.delete(key); },
+    setItem: (key: string, value: string) => {
+      data.set(key, value);
+    },
+    removeItem: (key: string) => {
+      data.delete(key);
+    },
   };
   return { data, storage, getStorage: () => storage };
 }
@@ -25,7 +33,10 @@ test("replaces the remembered RCA with an email, without storing credentials", (
   saveRememberedIdentifier("00123", true, getStorage);
   saveRememberedIdentifier("dev@academia.test", true, getStorage);
   assert.equal(readRememberedIdentifier(getStorage), "dev@academia.test");
-  assert.deepEqual([...data], [[REMEMBERED_IDENTIFIER_KEY, "dev@academia.test"]]);
+  assert.deepEqual(
+    [...data],
+    [[REMEMBERED_IDENTIFIER_KEY, "dev@academia.test"]],
+  );
 });
 
 test("opt-out removes only the remembered identifier", () => {
@@ -50,11 +61,21 @@ test("empty or oversized values are not restored or retained", () => {
 });
 
 test("unavailable storage does not throw during reads, writes or removal", () => {
-  const blocked = () => { throw new Error("Storage blocked"); };
-  const throwingMethods = () => ({ getItem: blocked, setItem: blocked, removeItem: blocked });
+  const blocked = () => {
+    throw new Error("Storage blocked");
+  };
+  const throwingMethods = () => ({
+    getItem: blocked,
+    setItem: blocked,
+    removeItem: blocked,
+  });
   for (const getStorage of [blocked, throwingMethods]) {
     assert.equal(readRememberedIdentifier(getStorage), "");
-    assert.doesNotThrow(() => saveRememberedIdentifier("00123", true, getStorage));
-    assert.doesNotThrow(() => saveRememberedIdentifier("00123", false, getStorage));
+    assert.doesNotThrow(() =>
+      saveRememberedIdentifier("00123", true, getStorage),
+    );
+    assert.doesNotThrow(() =>
+      saveRememberedIdentifier("00123", false, getStorage),
+    );
   }
 });

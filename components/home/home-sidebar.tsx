@@ -5,12 +5,12 @@ import {
   IconCategory,
   IconChevronDown,
   IconDeviceMobile,
-  IconHelpCircle,
   IconHome,
   IconX,
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
@@ -46,7 +46,7 @@ import { UserMenu } from "./user-menu";
 
 const navigation = homeSections.map((section, index) => ({
   ...section,
-  icon: [IconHome, null, IconDeviceMobile, IconBooks, IconHelpCircle][index],
+  icon: [IconHome, null, IconDeviceMobile, IconBooks][index],
 }));
 
 export function HomeSidebar({
@@ -65,6 +65,21 @@ export function HomeSidebar({
   const active = getHomeSection(params.get("secao"));
   const searching = !!normalizeHomeSearch(params.get("q"));
   const { isMobile, setOpenMobile } = useSidebar();
+  const selectedCategoryId = categories.find(
+    (category) => !searching && pathname === categoryHref(category),
+  )?.id;
+  const [openCategoryIds, setOpenCategoryIds] = useState<Set<string>>(
+    () => new Set(selectedCategoryId ? [selectedCategoryId] : []),
+  );
+
+  useEffect(() => {
+    if (!selectedCategoryId) return;
+
+    setOpenCategoryIds((currentIds) => {
+      if (currentIds.has(selectedCategoryId)) return currentIds;
+      return new Set([...currentIds, selectedCategoryId]);
+    });
+  }, [selectedCategoryId]);
 
   function closeMobileSidebar() {
     if (isMobile) setOpenMobile(false);
@@ -78,7 +93,17 @@ export function HomeSidebar({
 
         return (
           <SidebarMenuItem key={category.id}>
-            <Collapsible defaultOpen={selected}>
+            <Collapsible
+              open={openCategoryIds.has(category.id)}
+              onOpenChange={(open) => {
+                setOpenCategoryIds((currentIds) => {
+                  const nextIds = new Set(currentIds);
+                  if (open) nextIds.add(category.id);
+                  else nextIds.delete(category.id);
+                  return nextIds;
+                });
+              }}
+            >
               <CollapsibleTrigger
                 render={
                   <SidebarMenuButton

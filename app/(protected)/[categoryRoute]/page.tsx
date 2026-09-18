@@ -6,10 +6,8 @@ import { requireUser } from "@/lib/auth/session";
 import {
   getCategoryVideosPage,
   normalizeCategoryRoute,
-  normalizeCategoryVideoSort,
-  normalizeRecentVideosPage,
 } from "@/lib/home/catalog";
-import { getModuleProgress } from "@/lib/home/video-progress";
+import { getCategoryProgressOverview } from "@/lib/home/video-progress";
 
 export async function generateMetadata({
   params,
@@ -24,28 +22,21 @@ export async function generateMetadata({
 
 export default async function CategoryRoutePage({
   params,
-  searchParams,
 }: PageProps<"/[categoryRoute]">) {
-  const [{ categoryRoute }, query] = await Promise.all([params, searchParams]);
+  const { categoryRoute } = await params;
   const slug = normalizeCategoryRoute(categoryRoute);
   if (!slug) notFound();
 
-  const requestedPage = normalizeRecentVideosPage(
-    Array.isArray(query.pagina) ? query.pagina[0] : query.pagina,
-  );
-  const requestedSort = normalizeCategoryVideoSort(
-    Array.isArray(query.ordem) ? query.ordem[0] : query.ordem,
-  );
   const [page, user] = await Promise.all([
-    getCategoryVideosPage(slug, requestedPage, requestedSort),
+    getCategoryVideosPage(slug),
     requireUser(),
   ]);
   if (!page) notFound();
 
-  const moduleProgress = await getModuleProgress({
+  const progress = await getCategoryProgressOverview({
     userId: Number(user.id),
     categoryId: Number(page.category.id),
   });
 
-  return <CategoryVideosContent page={page} moduleProgress={moduleProgress} />;
+  return <CategoryVideosContent page={page} progress={progress} />;
 }

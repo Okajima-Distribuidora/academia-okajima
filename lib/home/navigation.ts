@@ -19,11 +19,6 @@ export const homeSections = [
     label: "Biblioteca",
     description: "Materiais e documentos da academia estarão disponíveis aqui.",
   },
-  {
-    id: "ajuda",
-    label: "Ajuda",
-    description: "Um espaço para encontrar orientações sobre a academia.",
-  },
 ] as const;
 
 export type HomeSectionId = (typeof homeSections)[number]["id"];

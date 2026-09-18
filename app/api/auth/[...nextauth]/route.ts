@@ -16,12 +16,19 @@ export async function POST(request: NextRequest) {
       bytes += value.byteLength;
       if (bytes > 16_384) {
         void reader.cancel();
-        return Response.json({ url: "/login?error=CredentialsSignin" }, { status: 413 });
+        return Response.json(
+          { url: "/login?error=CredentialsSignin" },
+          { status: 413 },
+        );
       }
       chunks.push(value);
     }
   }
-  return handlers.POST(new NextRequest(request.url, {
-    method: "POST", headers: new Headers(request.headers), body: Buffer.concat(chunks),
-  }));
+  return handlers.POST(
+    new NextRequest(request.url, {
+      method: "POST",
+      headers: new Headers(request.headers),
+      body: Buffer.concat(chunks),
+    }),
+  );
 }

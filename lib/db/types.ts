@@ -6,6 +6,7 @@ export interface UsersTable {
   codigorca: string;
   email: string;
   password: string | null;
+  must_change_password: Generated<number>;
   first_name: Generated<string>;
   last_name: Generated<string>;
   avatar: Generated<string>;
@@ -44,6 +45,14 @@ export interface VideosTable {
   time: Generated<number>;
   publication_date: Generated<number>;
   views: Generated<number>;
+  "240p": Generated<number>;
+  "360p": Generated<number>;
+  "480p": Generated<number>;
+  "720p": Generated<number>;
+  "1080p": Generated<number>;
+  "2048p": Generated<number>;
+  "4096p": Generated<number>;
+  quality: Generated<string>;
   upload_status: Generated<VideoUploadStatus>;
   upload_started_at: Generated<Date>;
   upload_status_updated_at: Generated<Date>;

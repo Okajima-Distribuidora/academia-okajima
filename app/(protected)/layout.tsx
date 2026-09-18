@@ -1,3 +1,4 @@
+import { ForcePasswordChangeDialog } from "@/components/auth/force-password-change-dialog";
 import { SessionRefresh } from "@/components/auth/session-refresh";
 import { HomeShell } from "@/components/home/home-shell";
 import { Toaster } from "@/components/ui/toast";
@@ -30,6 +31,7 @@ export default async function ProtectedLayout({
       >
         <SessionRefresh />
         {children}
+        {user.mustChangePassword ? <ForcePasswordChangeDialog /> : null}
       </HomeShell>
     </Toaster>
   );

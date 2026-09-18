@@ -17,7 +17,11 @@ export interface StudioVideoSidebarDetails {
   thumbnailUrl: string | null;
 }
 
+export type StudioVideoEditorSection = "details" | "comments";
+
 interface StudioSidebarContextValue {
+  activeEditorSection: StudioVideoEditorSection;
+  setActiveEditorSection: Dispatch<SetStateAction<StudioVideoEditorSection>>;
   videoDetails: StudioVideoSidebarDetails | null;
   setVideoDetails: Dispatch<SetStateAction<StudioVideoSidebarDetails | null>>;
 }
@@ -31,11 +35,18 @@ export function StudioSidebarStateProvider({
 }: {
   children: ReactNode;
 }) {
+  const [activeEditorSection, setActiveEditorSection] =
+    useState<StudioVideoEditorSection>("details");
   const [videoDetails, setVideoDetails] =
     useState<StudioVideoSidebarDetails | null>(null);
   const value = useMemo(
-    () => ({ videoDetails, setVideoDetails }),
-    [videoDetails],
+    () => ({
+      activeEditorSection,
+      setActiveEditorSection,
+      videoDetails,
+      setVideoDetails,
+    }),
+    [activeEditorSection, videoDetails],
   );
 
   return (

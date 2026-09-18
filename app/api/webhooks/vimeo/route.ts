@@ -49,10 +49,19 @@ export async function POST(request: Request) {
   }
 
   try {
+    console.info("[academia-vimeo] webhook_received", {
+      event: message.event,
+      vimeoVideoId: message.videoId,
+    });
     const recordsUpdated = await handleVimeoWebhookEvent(
       message.event,
       message.videoId,
     );
+    console.info("[academia-vimeo] webhook_processed", {
+      event: message.event,
+      vimeoVideoId: message.videoId,
+      recordsUpdated,
+    });
     return Response.json({ received: true, recordsUpdated });
   } catch (error) {
     console.error("[academia-vimeo] webhook_processing_failed", {

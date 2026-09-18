@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 
-import { formatStudioDecimal, formatStudioNumber } from "../../lib/studio/stats";
+import {
+  formatStudioDecimal,
+  formatStudioNumber,
+} from "../../lib/studio/stats";
 
 test("studio: formata números inteiros em pt-BR", () => {
   assert.equal(formatStudioNumber(0), "0");

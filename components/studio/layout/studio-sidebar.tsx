@@ -7,7 +7,6 @@ import {
   IconChevronsUp,
   IconFolder,
   IconLayoutDashboard,
-  IconMovie,
   IconPencil,
   IconSubtask,
   IconVideo,
@@ -36,17 +35,18 @@ import {
 } from "@/components/ui/sidebar";
 
 const editorNavigation = [
-  { label: "Detalhes", icon: IconPencil, active: true },
-  { label: "Analytics", icon: IconChartBar, active: false },
-  { label: "Editor", icon: IconMovie, active: false },
-  { label: "Comentários", icon: IconSubtask, active: false },
+  { id: "details", label: "Detalhes", icon: IconPencil },
+  { id: null, label: "Analytics", icon: IconChartBar },
+  { id: "comments", label: "Comentários", icon: IconSubtask },
+  { id: null, label: "Categorias", icon: IconFolder },
 ] as const;
 
 export function StudioSidebar({ name, rca }: { name: string; rca: string }) {
   const pathname = usePathname();
   const isVideoEditor = /^\/studio\/conteudo\/[^/]+$/.test(pathname);
   const showStudioNavigation = !isVideoEditor;
-  const { videoDetails } = useStudioSidebarState();
+  const { activeEditorSection, setActiveEditorSection, videoDetails } =
+    useStudioSidebarState();
   const { isMobile, setOpenMobile } = useSidebar();
   const closeMobile = () => {
     if (isMobile) setOpenMobile(false);
@@ -203,8 +203,12 @@ export function StudioSidebar({ name, rca }: { name: string; rca: string }) {
                     return (
                       <SidebarMenuItem key={item.label}>
                         <SidebarMenuButton
-                          isActive={item.active}
+                          isActive={item.id === activeEditorSection}
                           aria-label={item.label}
+                          onClick={() => {
+                            if (item.id) setActiveEditorSection(item.id);
+                            closeMobile();
+                          }}
                           className="h-12 rounded-xl px-4 text-sm font-medium"
                         >
                           <Icon aria-hidden="true" stroke={1.7} />

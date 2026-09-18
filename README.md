@@ -56,7 +56,7 @@ O player de vídeo é uma integração separada da biblioteca de UI.
 - Configuração do shadcn: `components.json`; tema e tokens: `app/globals.css`.
 - Componentes oficiais do formulário, alertas e estado vazio em `components/ui`;
   composição do login em `components/auth`, cabeçalho/marca/tema compartilhados.
-- Claro por padrão, escuro manual persistido com `next-themes`, fonte Geist e
+- Claro por padrão, escuro manual persistido na chave do tema, fonte Geist e
   roxo `#BD2CAC` nos dois temas. Catálogo e player ficam para etapas seguintes.
 
 Para adicionar um componente do registro oficial, por exemplo um campo de entrada:
@@ -68,6 +68,7 @@ npx shadcn@latest add @shadcn/input
 ## Documentação do projeto
 
 - [Home — estrutura inicial](docs/home.md)
+- [Upload e webhooks do Vimeo](docs/vimeo-upload.md)
 - [Login local implementado: fluxo, limites e testes](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/login-local.md)
 - [Banco de desenvolvimento local](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/banco-local.md)
 - [Fluxo completo de autenticação do legado PHP](C:/Users/Okajima/Documents/ChatGPT/academia-okajima/docs/autenticacao-legado.md)

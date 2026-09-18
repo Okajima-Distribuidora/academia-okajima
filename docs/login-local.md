@@ -52,7 +52,7 @@ Isso é adequado somente para o marco local de processo único. Reiniciar o proc
 
 ## Interface
 
-- Tema claro na primeira visita; alternância manual para escuro. Preferência persistida por `next-themes` na chave `academia-okajima-theme`; nenhum token/senha em localStorage.
+- Tema claro na primeira visita; alternância manual para escuro. Preferência persistida na chave `academia-okajima-theme`; nenhum token/senha em localStorage.
 - Logo existente com versões para os dois temas, fonte Geist e neutros. Cor principal definida: **`#BD2CAC` tanto no claro quanto no escuro**, com texto branco nos botões. Tokens compartilhados também aplicam a cor ao foco e à cor principal da sidebar; hover escurece levemente o roxo sem transparência para preservar contraste. Os arquivos dos logos não foram recoloridos.
 - shadcn oficial, Base UI `base-nova`: componentes de formulário, mensagens, botões, separador e estado vazio. Tokens compartilhados em `app/globals.css`, cabeçalho/marca/tema reutilizáveis.
 - Formulário com labels, autocomplete, erros anunciados, foco no campo inválido, mostrar/ocultar senha, envio por Enter e estado de envio. Senha incorreta é limpa do campo.

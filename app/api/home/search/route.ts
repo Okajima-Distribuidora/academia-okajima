@@ -1,10 +1,10 @@
-import { auth } from "@/auth";
+import { getCurrentUser } from "@/lib/auth/session";
 import { searchHomeVideos } from "@/lib/home/catalog";
 import { normalizeHomeSearch } from "@/lib/home/navigation";
 
 export async function GET(request: Request) {
-  const session = await auth();
-  if (!session?.user?.id) {
+  const user = await getCurrentUser();
+  if (!user || user.mustChangePassword) {
     return Response.json({ results: [] }, { status: 401 });
   }
 

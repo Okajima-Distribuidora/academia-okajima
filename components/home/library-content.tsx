@@ -4,7 +4,6 @@ import {
   IconClipboardText,
   IconFileText,
   IconFolder,
-  IconHeadset,
 } from "@tabler/icons-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -40,13 +39,6 @@ const fallbackMaterials = [
       "Conteúdos de reforço para provas, trilhas internas e capacitações recorrentes.",
     icon: IconCertificate,
     label: "Trilhas",
-  },
-  {
-    title: "Suporte",
-    description:
-      "Orientações para dúvidas operacionais e direcionamento dos canais de apoio.",
-    icon: IconHeadset,
-    label: "Ajuda",
   },
 ];
 

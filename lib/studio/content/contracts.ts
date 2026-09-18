@@ -1,4 +1,5 @@
 import type { VideoUploadStatus } from "@/lib/db/types";
+import type { StudioVideoWarning } from "@/lib/studio/content/warnings";
 
 export type StudioContentType = "videos" | "shorts";
 export type StudioVideoPrivacy = 0 | 1;
@@ -17,6 +18,8 @@ export interface StudioContentItem {
   comments: number;
   likes: number;
   thumbnailUrl: string | null;
+  fileSize: number;
+  subcategoryIds: number[];
   vimeoId: string | null;
   uploadStatus: VideoUploadStatus;
   uploadActionStatus?: "cancelling";
@@ -27,6 +30,7 @@ export interface StudioContentItem {
   cancelledAt: string | null;
   uploadProgress?: number;
   uploadRemainingSeconds?: number | null;
+  warnings: StudioVideoWarning[];
 }
 
 export interface StudioContentPage {
