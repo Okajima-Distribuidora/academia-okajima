@@ -9,7 +9,7 @@ const viewSchema = z.object({
 
 export async function POST(request: Request) {
   const user = await getCurrentUser();
-  if (!user) {
+  if (!user || user.mustChangePassword) {
     return Response.json(
       { message: "Você precisa entrar novamente." },
       { status: 401 },

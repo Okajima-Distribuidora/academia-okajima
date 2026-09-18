@@ -18,6 +18,14 @@ export interface VideoProgressSnapshot {
   completedAt: Date | null;
 }
 
+export interface CategoryProgressOverview {
+  category: ModuleProgress;
+  subcategories: Array<{
+    subcategoryId: number;
+    progress: ModuleProgress;
+  }>;
+}
+
 export async function getModuleProgress({
   userId,
   categoryId,
@@ -60,6 +68,61 @@ export async function getModuleProgress({
     Number(row?.completedLessons ?? 0),
     Number(row?.totalLessons ?? 0),
   );
+}
+
+export async function getCategoryProgressOverview({
+  userId,
+  categoryId,
+}: {
+  userId: number;
+  categoryId: number;
+}): Promise<CategoryProgressOverview> {
+  const [category, subcategories] = await Promise.all([
+    getModuleProgress({ userId, categoryId }),
+    getDb()
+      .selectFrom("academy_subcategories")
+      .innerJoin(
+        "academy_video_subcategories",
+        "academy_video_subcategories.subcategory_id",
+        "academy_subcategories.id",
+      )
+      .innerJoin("videos", "videos.id", "academy_video_subcategories.video_id")
+      .leftJoin("academy_video_progress", (join) =>
+        join
+          .onRef("academy_video_progress.video_id", "=", "videos.id")
+          .on("academy_video_progress.user_id", "=", userId),
+      )
+      .select([
+        "academy_subcategories.id as subcategoryId",
+        sql<number>`count(distinct ${sql.ref("videos.id")})`.as("totalLessons"),
+        sql<number>`count(distinct case when ${sql.ref("academy_video_progress.completed_at")} is not null then ${sql.ref("videos.id")} end)`.as(
+          "completedLessons",
+        ),
+      ])
+      .where("academy_subcategories.category_id", "=", categoryId)
+      .where("academy_subcategories.is_active", "=", 1)
+      .where("videos.converted", "!=", 2)
+      .where("videos.privacy", "=", 0)
+      .where("videos.is_movie", "=", 0)
+      .where("videos.live_time", "=", 0)
+      .where("videos.approved", "=", 1)
+      .where("videos.upload_status", "=", "ready")
+      .where("videos.deleted_at", "is", null)
+      .where("videos.is_short", "=", 0)
+      .groupBy("academy_subcategories.id")
+      .execute(),
+  ]);
+
+  return {
+    category,
+    subcategories: subcategories.map((subcategory) => ({
+      subcategoryId: subcategory.subcategoryId,
+      progress: calculateModuleProgress(
+        Number(subcategory.completedLessons),
+        Number(subcategory.totalLessons),
+      ),
+    })),
+  };
 }
 
 export async function getVideoProgress({

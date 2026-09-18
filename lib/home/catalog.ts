@@ -98,9 +98,15 @@ export type CategoryVideoSort =
   | "duracao-asc"
   | "duracao-desc";
 
-export interface CategoryVideosPage extends RecentVideosPage {
+export interface CategoryVideosPage {
   category: HomeCategory;
-  sort: CategoryVideoSort;
+  subcategories: CategoryVideosSubcategory[];
+  totalVideos: number;
+}
+
+export interface CategoryVideosSubcategory {
+  subcategory: HomeSubcategory;
+  videos: RecentVideo[];
 }
 
 export interface VideoComment {
@@ -605,31 +611,6 @@ export function normalizeRecentVideosPage(
   return Number.isSafeInteger(page) && page > 0 ? page : 1;
 }
 
-function orderCategoryVideos(
-  query: ReturnType<typeof publicVideosQuery>,
-  sort: CategoryVideoSort,
-) {
-  switch (sort) {
-    case "nome-asc":
-      return query.orderBy("title", "asc").orderBy("id", "asc");
-    case "nome-desc":
-      return query.orderBy("title", "desc").orderBy("id", "desc");
-    case "data-asc":
-      return query.orderBy("time", "asc").orderBy("id", "asc");
-    case "duracao-asc":
-      return query
-        .orderBy(sql<number>`time_to_sec(videos.duration)`, "asc")
-        .orderBy("id", "asc");
-    case "duracao-desc":
-      return query
-        .orderBy(sql<number>`time_to_sec(videos.duration)`, "desc")
-        .orderBy("id", "desc");
-    case "data-desc":
-    default:
-      return query.orderBy("time", "desc").orderBy("id", "desc");
-  }
-}
-
 async function presentRecentVideos(
   rows: readonly PresentedVideoRow[],
   categoryLabels: Map<number, VideoCategorySummary>,
@@ -778,8 +759,6 @@ export async function searchHomeVideos(
 
 export async function getCategoryVideosPage(
   categorySlug: string,
-  requestedPage: number,
-  requestedSort: CategoryVideoSort,
 ): Promise<CategoryVideosPage | null> {
   const row = await getDb()
     .selectFrom("academy_categories")
@@ -807,43 +786,33 @@ export async function getCategoryVideosPage(
     .select(({ fn }) => fn.countAll<number>().as("total"))
     .executeTakeFirst();
   const totalVideos = Number(countRow?.total ?? 0);
-  const totalPages = Math.ceil(totalVideos / RECENT_VIDEOS_PAGE_SIZE);
-  const currentPage = Math.min(
-    Math.max(1, requestedPage),
-    Math.max(1, totalPages),
-  );
-  const rows = await orderCategoryVideos(baseQuery, requestedSort)
-    .select([
-      "id",
-      "video_id",
-      "title",
-      "description",
-      "duration",
-      "vimeo",
-      "video_location",
-      "time",
-      "views",
-    ])
-    .limit(RECENT_VIDEOS_PAGE_SIZE)
-    .offset((currentPage - 1) * RECENT_VIDEOS_PAGE_SIZE)
-    .execute();
+  const subcategories = await listSubcategories([categoryWithAnchor]);
 
-  const categoryLabels = new Map(
-    rows.map((video) => [
-      video.id,
-      {
-        label: categoryWithAnchor.label,
-        slug: categoryWithAnchor.slug,
-      },
-    ]),
+  const categorySubcategories = await Promise.all(
+    subcategories.map(async (subcategory) => {
+      const rows = await listSubcategoryVideos(subcategory);
+      const categoryLabels = new Map<number, VideoCategorySummary>(
+        rows.map((video) => [
+          video.id,
+          {
+            label: categoryWithAnchor.label,
+            slug: categoryWithAnchor.slug,
+          },
+        ]),
+      );
+
+      return {
+        subcategory,
+        videos: await presentRecentVideos(rows, categoryLabels),
+      };
+    }),
   );
 
   return {
     category: categoryWithAnchor,
-    sort: requestedSort,
-    videos: await presentRecentVideos(rows, categoryLabels),
-    currentPage,
-    totalPages,
+    subcategories: categorySubcategories.filter(
+      ({ videos }) => videos.length > 0,
+    ),
     totalVideos,
   };
 }
@@ -859,7 +828,9 @@ async function countVideoLikes(videoId: number): Promise<number> {
   return Number(row?.total ?? 0);
 }
 
-async function listVideoComments(videoId: number): Promise<VideoComment[]> {
+export async function listVideoComments(
+  videoId: number,
+): Promise<VideoComment[]> {
   const rows = await getDb()
     .selectFrom("comments")
     .leftJoin("users", "users.id", "comments.user_id")

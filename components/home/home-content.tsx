@@ -1,7 +1,6 @@
 import {
   IconBooks,
   IconDeviceMobile,
-  IconHelpCircle,
   IconSearch,
   IconVideo,
 } from "@tabler/icons-react";
@@ -135,15 +134,12 @@ export function HomeContent({
     return <LibraryContent section={section} pages={libraryPages} />;
   }
 
-  const isHelp = !query && section.id === "ajuda";
   const isLibrary = !query && section.id === "biblioteca";
-  const Icon = isHelp
-    ? IconHelpCircle
-    : isLibrary
-      ? IconBooks
-      : section.id === "shorts"
-        ? IconDeviceMobile
-        : IconVideo;
+  const Icon = isLibrary
+    ? IconBooks
+    : section.id === "shorts"
+      ? IconDeviceMobile
+      : IconVideo;
   return (
     <main
       id="conteudo"
@@ -164,16 +160,13 @@ export function HomeContent({
             <Icon aria-hidden="true" stroke={1.6} />
           </EmptyMedia>
           <EmptyTitle>
-            {isHelp
-              ? "A central de ajuda está sendo preparada"
-              : isLibrary
-                ? "A biblioteca está sendo preparada"
-                : "Seu espaço de vídeos está sendo preparado"}
+            {isLibrary
+              ? "A biblioteca está sendo preparada"
+              : "Seu espaço de vídeos está sendo preparado"}
           </EmptyTitle>
           <EmptyDescription>
-            {isHelp
-              ? "As orientações e os canais de atendimento serão adicionados nas próximas etapas."
-              : "Esta é a estrutura inicial da home. Os vídeos do Vimeo serão conectados na próxima etapa."}
+            Esta é a estrutura inicial da home. Os vídeos do Vimeo serão
+            conectados na próxima etapa.
           </EmptyDescription>
         </EmptyHeader>
       </Empty>
