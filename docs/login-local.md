@@ -16,7 +16,7 @@ Abra `http://localhost:3000/login`. A conta local já provisionada usa RCA `admi
 
 Configuração privada em `.env.local`, ignorado pelo Git:
 
-- `DATABASE_URL`: aceita exclusivamente `127.0.0.1:3307/academia_local`; URL com outro destino/parâmetros é recusada antes da conexão.
+- `DATABASE_URL`: URL MySQL completa, sem parâmetros ou fragmentos. No ambiente local ela aponta para `127.0.0.1:3307/academia_local`; em homologação, use a URL do banco isolado.
 - `AUTH_SECRET`: segredo aleatório exclusivo desta academia. Não é salt nem chave do bcrypt.
 - `AUTH_URL`: `http://localhost:3000`. Use esse endereço no navegador, consistentemente.
 - `AUTH_DEV_SEED_PASSWORD`: somente provisionamento/teste local; nenhuma dependência no fluxo de login.

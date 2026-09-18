@@ -6,14 +6,14 @@ import { createPool, type RowDataPacket } from "mysql2";
 import { authenticateCredentials } from "../../lib/auth/credentials";
 import { LocalLoginLimiter } from "../../lib/auth/rate-limit";
 import { createUsersRepository } from "../../lib/auth/users";
-import { localDatabaseConfig } from "../../lib/db/config";
+import { databaseConfig } from "../../lib/db/config";
 import type { Database } from "../../lib/db/types";
 import { PHP_TEST_HASH, PHP_TEST_PASSWORD } from "./fixtures";
 
 test("MySQL real: consultas em tabela TEMPORARY isolada, base original intacta", {
   skip: process.env.AUTH_TEST_DATABASE !== "1",
 }, async () => {
-  const config = localDatabaseConfig(process.env.DATABASE_URL);
+  const config = databaseConfig(process.env.DATABASE_URL);
   const observer = createPool({ ...config, connectionLimit: 1 });
   const fingerprint = async () => {
     const [rows] = await observer

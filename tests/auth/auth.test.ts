@@ -20,7 +20,7 @@ import {
 } from "../../lib/auth/rate-limit";
 import type { UsersRepository } from "../../lib/auth/users";
 import { credentialsSchema, isLoginEmail } from "../../lib/auth/validation";
-import { localDatabaseConfig } from "../../lib/db/config";
+import { databaseConfig } from "../../lib/db/config";
 import { PHP_TEST_HASH, PHP_TEST_PASSWORD } from "./fixtures";
 
 const account: Account = {
@@ -409,18 +409,32 @@ test("liberação é idempotente, recupera capacidade e não altera uma nova jan
 test("o cache da política nova é reutilizado entre chamadas", () => {
   assert.equal(getLoginLimiter(), getLoginLimiter());
 });
-test("recusa qualquer configuração de banco fora do destino local", () => {
+test("aceita uma URL MySQL completa e recusa formatos inválidos", () => {
   const url = "mysql://synthetic:synthetic@127.0.0.1:3307/academia_local";
-  assert.equal(localDatabaseConfig(url).connectionLimit, 5);
+  assert.equal(databaseConfig(url).connectionLimit, 5);
+  assert.deepEqual(databaseConfig("mysql://user:pass@db.example.test:3306/production"), {
+    host: "db.example.test",
+    port: 3306,
+    database: "production",
+    user: "user",
+    password: "pass",
+    charset: "utf8mb4",
+    connectionLimit: 5,
+    maxIdle: 5,
+    idleTimeout: 60_000,
+    connectTimeout: 5_000,
+    waitForConnections: true,
+    queueLimit: 20,
+    multipleStatements: false,
+  });
   for (const invalid of [
     undefined,
     "inválida",
-    url.replace("127.0.0.1", "db.example.test"),
-    url.replace("3307", "3306"),
-    url.replace("academia_local", "production"),
     url + "?host=example.test",
+    url.replace("mysql:", "postgres:"),
+    "mysql://user:pass@/database",
   ]) {
-    assert.throws(() => localDatabaseConfig(invalid));
+    assert.throws(() => databaseConfig(invalid));
   }
 });
 test("cookies próprios seguros, sessão 8h e redirects restritos", () => {
