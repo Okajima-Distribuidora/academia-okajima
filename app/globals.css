@@ -546,6 +546,9 @@ body {
   letter-spacing: -0.012em;
   text-transform: capitalize;
 }
+.home-recent-heading-title {
+  scroll-margin-top: 5.25rem;
+}
 .home-recent-heading-icon {
   display: grid;
   width: 2rem;

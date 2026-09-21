@@ -112,7 +112,9 @@ export function VideoCarousel({
         <span className="home-recent-heading-icon" aria-hidden="true">
           <HeadingIcon stroke={1.8} />
         </span>
-        <h2 id={headingId}>{title}</h2>
+        <h2 id={headingId} className="home-recent-heading-title">
+          {title}
+        </h2>
       </div>
       {progress && progress.totalLessons > 0 ? (
         <Progress value={progress.percentage} className="max-w-md">
