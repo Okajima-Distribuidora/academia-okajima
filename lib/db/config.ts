@@ -38,7 +38,10 @@ export function databaseConfig(value: string | undefined) {
     idleTimeout: 60_000,
     connectTimeout: 5_000,
     waitForConnections: true,
-    queueLimit: 20,
+    // Queries wait for the single connection instead of failing during a
+    // burst of concurrent server-rendered requests. In mysql2, zero is
+    // an unbounded queue.
+    queueLimit: 0,
     multipleStatements: false,
   };
 }
