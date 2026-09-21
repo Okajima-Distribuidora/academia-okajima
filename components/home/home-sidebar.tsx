@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Brand } from "@/components/brand";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
@@ -66,6 +66,7 @@ export function HomeSidebar({
   const active = getHomeSection(params.get("secao"));
   const searching = !!normalizeHomeSearch(params.get("q"));
   const { isMobile, setOpen, setOpenMobile } = useSidebar();
+  const pendingScrollCleanup = useRef<(() => void) | null>(null);
   const selectedCategoryId = categories.find(
     (category) => !searching && pathname === categoryHref(category),
   )?.id;
@@ -82,8 +83,48 @@ export function HomeSidebar({
     });
   }, [selectedCategoryId]);
 
+  useEffect(() => {
+    return () => pendingScrollCleanup.current?.();
+  }, []);
+
   function closeMobileSidebar() {
     if (isMobile) setOpenMobile(false);
+  }
+
+  function scrollToSubcategory(targetId: string) {
+    pendingScrollCleanup.current?.();
+
+    const scrollWhenAvailable = () => {
+      const target = document.getElementById(targetId);
+      if (!target) return false;
+
+      target.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
+          .matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+      return true;
+    };
+
+    if (scrollWhenAvailable()) return;
+
+    const observer = new MutationObserver(() => {
+      if (scrollWhenAvailable()) cleanup();
+    });
+    let timeout: number;
+    const cleanup = () => {
+      observer.disconnect();
+      window.clearTimeout(timeout);
+      if (pendingScrollCleanup.current === cleanup) {
+        pendingScrollCleanup.current = null;
+      }
+    };
+
+    pendingScrollCleanup.current = cleanup;
+    observer.observe(document.body, { childList: true, subtree: true });
+    timeout = window.setTimeout(cleanup, 5_000);
   }
 
   function item(section: (typeof navigation)[number]) {
@@ -129,24 +170,35 @@ export function HomeSidebar({
                   <SidebarMenuSub
                     aria-label={`Subcategorias de ${category.label}`}
                   >
-                    {category.subcategories.map((subcategory, index) => (
-                      <SidebarMenuSubItem key={subcategory.id}>
-                        <SidebarMenuSubButton
-                          render={
-                            <Link
-                              href={categorySubcategoryHref(
-                                category,
-                                subcategory,
-                                index > 0,
-                              )}
-                            />
-                          }
-                          onClick={closeMobileSidebar}
-                        >
-                          <span>{subcategory.label}</span>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
+                    {category.subcategories.map((subcategory, index) => {
+                      const shouldScrollToSubcategory = index > 0;
+                      const targetId = `category-subcategory-${subcategory.id}-title`;
+
+                      return (
+                        <SidebarMenuSubItem key={subcategory.id}>
+                          <SidebarMenuSubButton
+                            render={
+                              <Link
+                                href={categorySubcategoryHref(
+                                  category,
+                                  subcategory,
+                                  shouldScrollToSubcategory,
+                                )}
+                                scroll={!shouldScrollToSubcategory}
+                                onNavigate={
+                                  shouldScrollToSubcategory
+                                    ? () => scrollToSubcategory(targetId)
+                                    : undefined
+                                }
+                              />
+                            }
+                            onClick={closeMobileSidebar}
+                          >
+                            <span>{subcategory.label}</span>
+                          </SidebarMenuSubButton>
+                        </SidebarMenuSubItem>
+                      );
+                    })}
                   </SidebarMenuSub>
                 </CollapsibleContent>
               ) : null}
