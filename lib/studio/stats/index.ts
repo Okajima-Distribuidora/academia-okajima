@@ -2,7 +2,9 @@ import "server-only";
 
 import { getDb } from "@/lib/db";
 import { decodeLegacyText, extractVimeoId } from "@/lib/home/catalog";
+import type { StudioCategoryStats } from "@/lib/studio/categories/types";
 import { getVimeoVideoPresentation } from "@/lib/vimeo/videos";
+import { getWatchTimeDailyHistory, getWatchTimeReport } from "./watch-time";
 
 type StudioVideoRow = {
   id: number;
@@ -29,6 +31,7 @@ export interface StudioStats {
   summary: {
     views: number;
     watchHours: number;
+    watchHistory: Array<{ date: string; watchHours: number }>;
     totalVideos: number;
     viewHistory: Array<{
       date: string;
@@ -69,9 +72,9 @@ function listAnalyticsDates(now = new Date()): string[] {
   });
 }
 
-async function getStudioViewHistory(): Promise<
-  Array<{ date: string; views: number }>
-> {
+async function getStudioViewHistory(
+  categoryId?: number,
+): Promise<Array<{ date: string; views: number }>> {
   const now = new Date();
   const dates = listAnalyticsDates(now);
   const earliestSeconds = Math.floor(
@@ -90,6 +93,9 @@ async function getStudioViewHistory(): Promise<
     .where("videos.upload_status", "=", "ready")
     .where("videos.deleted_at", "is", null)
     .where("videos.is_short", "=", 0)
+    .$if(categoryId !== undefined, (query) =>
+      query.where("videos.id", "in", categoryVideoIds(categoryId as number)),
+    )
     .execute();
   const totals = new Map(dates.map((date) => [date, 0]));
 
@@ -175,7 +181,9 @@ export function formatStudioDecimal(value: number): string {
   }).format(safeValue);
 }
 
-async function listStudioVideos(): Promise<StudioVideoRow[]> {
+async function listStudioVideos(
+  categoryId?: number,
+): Promise<StudioVideoRow[]> {
   return getDb()
     .selectFrom("videos")
     .select(["id", "title", "time", "views", "vimeo", "video_location"])
@@ -186,7 +194,43 @@ async function listStudioVideos(): Promise<StudioVideoRow[]> {
     .where("approved", "=", 1)
     .where("upload_status", "=", "ready")
     .where("deleted_at", "is", null)
+    .$if(categoryId !== undefined, (query) =>
+      query
+        .where("id", "in", categoryVideoIds(categoryId as number))
+        .where("is_short", "=", 0),
+    )
     .execute();
+}
+
+function categoryVideoIds(categoryId: number) {
+  // IN avoids counting a video more than once across subcategories.
+  return getDb()
+    .selectFrom("academy_video_subcategories")
+    .innerJoin(
+      "academy_subcategories",
+      "academy_subcategories.id",
+      "academy_video_subcategories.subcategory_id",
+    )
+    .select("academy_video_subcategories.video_id")
+    .where("academy_subcategories.category_id", "=", categoryId);
+}
+
+export async function getStudioCategoryStats(
+  categoryId: number,
+): Promise<StudioCategoryStats> {
+  if (!Number.isSafeInteger(categoryId) || categoryId < 1)
+    throw new Error("Categoria inválida.");
+  const [videos, viewHistory, watchReport] = await Promise.all([
+    listStudioVideos(categoryId),
+    getStudioViewHistory(categoryId),
+    getWatchTimeReport({ categoryId, publishedOnly: true }),
+  ]);
+  return {
+    views: videos.reduce((total, video) => total + Math.max(0, video.views), 0),
+    watchHours: watchReport.watchHours,
+    totalVideos: videos.length,
+    viewHistory,
+  };
 }
 
 async function listPublishedVideos(): Promise<PublishedVideoRow[]> {
@@ -202,11 +246,14 @@ async function listPublishedVideos(): Promise<PublishedVideoRow[]> {
 }
 
 export async function getStudioStats(): Promise<StudioStats> {
-  const [videos, viewHistory, publishedVideos] = await Promise.all([
-    listStudioVideos(),
-    getStudioViewHistory(),
-    listPublishedVideos(),
-  ]);
+  const [videos, viewHistory, publishedVideos, watchReport, watchHistory] =
+    await Promise.all([
+      listStudioVideos(),
+      getStudioViewHistory(),
+      listPublishedVideos(),
+      getWatchTimeReport({ publishedOnly: true }),
+      getWatchTimeDailyHistory({ publishedOnly: true }, listAnalyticsDates()),
+    ]);
   const publishedVideoHistory = getStudioPublishedVideoHistory(publishedVideos);
   const latestVideo =
     [...videos].sort((a, b) => b.time - a.time || b.id - a.id)[0] ?? null;
@@ -249,7 +296,8 @@ export async function getStudioStats(): Promise<StudioStats> {
         (total, video) => total + Math.max(0, video.views),
         0,
       ),
-      watchHours: 0,
+      watchHours: watchReport.watchHours,
+      watchHistory,
       totalVideos: publishedVideos.length,
       viewHistory,
       publishedVideoHistory,
