@@ -4,13 +4,16 @@ import {
   IconCategory,
   IconChevronLeft,
   IconChevronRight,
+  IconEye,
+  IconPencil,
   IconPlus,
 } from "@tabler/icons-react";
+import Link from "next/link";
 import { useState } from "react";
 
 import { StudioPageHeader } from "@/components/studio/layout/studio-page-header";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardAction,
@@ -214,17 +217,27 @@ function CategoryCard({
     <Card className="h-[37rem]">
       <CardHeader className="gap-3">
         <div className="min-w-0">
-          <CardTitle className="truncate font-semibold uppercase">
-            {category.name}
-          </CardTitle>
+          <div className="flex min-w-0 items-center gap-2">
+            <CardTitle className="truncate font-semibold uppercase">
+              {category.name}
+            </CardTitle>
+            <Badge variant={category.isActive ? "secondary" : "outline"}>
+              {category.isActive ? "Ativa" : "Inativa"}
+            </Badge>
+          </div>
           <CardDescription className="truncate">
             {category.description ?? category.slug}
           </CardDescription>
         </div>
         <CardAction className="flex items-center gap-2">
-          <Badge variant={category.isActive ? "secondary" : "outline"}>
-            {category.isActive ? "Ativa" : "Inativa"}
-          </Badge>
+          <Link
+            href={`/studio/categorias/${category.id}`}
+            className={buttonVariants({ variant: "outline" })}
+            aria-label={`Editar categoria ${category.name}`}
+          >
+            <IconEye data-icon="inline-start" aria-hidden="true" />
+            Visualizar
+          </Link>
           <CreateSubcategoryDialog
             category={category}
             action={createSubcategoryAction}

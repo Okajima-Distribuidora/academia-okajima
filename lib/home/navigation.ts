@@ -49,8 +49,7 @@ export function categorySubcategoryHref(
 ) {
   if (!shouldScrollToSubcategory) return categoryHref(category);
 
-  const targetId = `category-subcategory-${encodeURIComponent(subcategory.id)}-title`;
-  return `${categoryHref(category)}?subcategoria=${encodeURIComponent(subcategory.id)}#${targetId}`;
+  return `${categoryHref(category)}?subcategoria=${encodeURIComponent(subcategory.id)}`;
 }
 
 export function videoWatchHref(

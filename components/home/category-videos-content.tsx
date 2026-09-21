@@ -23,18 +23,18 @@ export function CategoryVideosSkeleton() {
     <main
       id="conteudo"
       tabIndex={-1}
-      className="category-videos-page flex min-w-0 flex-1 flex-col gap-8 p-5 outline-none sm:p-8 lg:px-10"
+      className="category-videos-page flex min-w-0 flex-1 flex-col gap-6 outline-none"
     >
-      <header className="flex max-w-5xl flex-col gap-4">
-        <Skeleton className="size-11 rounded-full" />
-        <div className="flex max-w-3xl flex-col gap-3">
+      <header className="category-videos-hero">
+        <div className="category-videos-hero-copy">
+          <Skeleton className="size-11 rounded-full" />
           <Skeleton className="h-9 w-64" />
           <Skeleton className="h-4 w-full" />
           <Skeleton className="h-4 w-3/4" />
         </div>
       </header>
       {Array.from({ length: 3 }, (_, index) => (
-        <div key={index} className="flex flex-col gap-4">
+        <div key={index} className="flex flex-col gap-4 px-7 sm:px-11 lg:px-14">
           <Skeleton className="h-6 w-48" />
           <div className="flex gap-4 overflow-hidden">
             {Array.from({ length: 4 }, (_, cardIndex) => (
@@ -72,10 +72,10 @@ export function CategoryVideosContent({
     <main
       id="conteudo"
       tabIndex={-1}
-      className="category-videos-page flex min-w-0 flex-1 flex-col gap-8 p-5 outline-none sm:p-8 lg:px-10"
+      className="category-videos-page flex min-w-0 flex-1 flex-col gap-6 outline-none"
     >
-      <header className="flex max-w-5xl flex-col gap-4">
-        <div className="flex max-w-3xl flex-col gap-2">
+      <header className="category-videos-hero">
+        <div className="category-videos-hero-copy">
           <p className="text-sm font-semibold uppercase text-primary">
             Categoria
           </p>
@@ -83,18 +83,22 @@ export function CategoryVideosContent({
             <span className="category-videos-icon" aria-hidden="true">
               <IconCategory stroke={1.8} />
             </span>
-            <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              {page.category.label}
-            </h1>
+            <div className="category-videos-title-copy">
+              <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
+                {page.category.label}
+              </h1>
+              {page.category.description ? (
+                <p className="text-sm leading-6 text-muted-foreground sm:text-base">
+                  {page.category.description}
+                </p>
+              ) : null}
+            </div>
           </div>
-
-          {page.category.description ? (
-            <p className="text-sm leading-6 text-muted-foreground sm:text-base">
-              {page.category.description}
-            </p>
-          ) : null}
           {progress.category.totalLessons > 0 ? (
-            <Progress value={progress.category.percentage} className="max-w-md">
+            <Progress
+              value={progress.category.percentage}
+              className="max-w-2xl!"
+            >
               <ProgressLabel>
                 {progress.category.completedLessons} de{" "}
                 {progress.category.totalLessons} aulas concluídas
@@ -102,7 +106,7 @@ export function CategoryVideosContent({
               <ProgressValue />
             </Progress>
           ) : null}
-          <p className="text-sm text-muted-foreground">
+          <p className="category-videos-hero-count">
             {page.totalVideos > 0
               ? `${page.totalVideos} ${page.totalVideos === 1 ? "vídeo disponível" : "vídeos disponíveis"}`
               : "Nenhum vídeo encontrado nesta categoria"}
@@ -111,16 +115,18 @@ export function CategoryVideosContent({
       </header>
 
       {page.subcategories.length > 0 ? (
-        <div className="flex flex-col gap-8">
+        <div className="category-videos-sections px-7 sm:px-11 lg:px-14">
           {page.subcategories.map(({ subcategory, videos }) => (
             <VideoCarousel
               key={subcategory.id}
               headingId={`category-subcategory-${subcategory.id}-title`}
               listId={`category-subcategory-${subcategory.id}-videos`}
               title={subcategory.label}
+              description={subcategory.description}
               videos={videos}
               categorySlug={page.category.slug}
               progress={progressBySubcategory.get(Number(subcategory.id))}
+              progressClassName="max-w-[25rem]!"
             />
           ))}
         </div>

@@ -45,7 +45,7 @@ test("home: seções inválidas retornam ao início, sem destinos externos", () 
       { slug: "vendas" },
       { id: "subcategory 10" },
     ),
-    "/categoria-vendas?subcategoria=subcategory%2010#category-subcategory-subcategory%2010-title",
+    "/categoria-vendas?subcategoria=subcategory%2010",
   );
   assert.equal(
     categorySubcategoryHref(

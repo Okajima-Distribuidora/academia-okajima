@@ -18,7 +18,7 @@ export function CategoryHashScroll({ targetId }: { targetId: string | null }) {
       window.history.replaceState(
         null,
         "",
-        `${window.location.pathname}${window.location.hash}`,
+        `${window.location.pathname}#${targetId}`,
       );
     });
 
