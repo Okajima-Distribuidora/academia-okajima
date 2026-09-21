@@ -1,16 +1,12 @@
-import { IconThumbDown, IconThumbUp, IconVideo } from "@tabler/icons-react";
+import { IconVideo } from "@tabler/icons-react";
 import Link from "next/link";
 
-import { CommentTextArea } from "@/components/home/comment-text-area";
 import { RecentVideoCardContent } from "@/components/home/recent-video-card-content";
+import { VideoComments } from "@/components/home/video-comments";
 import { VideoProgressPlayer } from "@/components/home/video-progress-player";
+import { VideoReactions } from "@/components/home/video-reactions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group";
 import {
   Empty,
   EmptyDescription,
@@ -205,33 +201,11 @@ export function VideoWatchContent({
                   </div>
 
                   <div className="watch-actions">
-                    <ButtonGroup
-                      className="watch-reaction-group"
-                      aria-label="Avaliar vídeo"
-                    >
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        className="watch-reaction-like"
-                      >
-                        <IconThumbUp
-                          data-icon="inline-start"
-                          aria-hidden="true"
-                        />
-                        {page.likesLabel}
-                      </Button>
-                      <ButtonGroupSeparator />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon-lg"
-                        className="watch-reaction-dislike"
-                        aria-label="Não gostei"
-                      >
-                        <IconThumbDown aria-hidden="true" />
-                      </Button>
-                    </ButtonGroup>
+                    <VideoReactions
+                      videoId={page.video.id}
+                      initialLikesCount={page.likesCount}
+                      initialReaction={page.viewerReaction}
+                    />
                   </div>
                 </div>
               </div>
@@ -245,61 +219,12 @@ export function VideoWatchContent({
             </section>
           </section>
 
-          <section
-            className="watch-comments flex min-w-0 flex-col gap-5"
-            aria-labelledby="watch-comments-title"
-          >
-            <div className="flex items-center gap-2">
-              <h2
-                id="watch-comments-title"
-                className="text-xl font-semibold tracking-tight"
-              >
-                {page.commentsLabel}
-              </h2>
-            </div>
-
-            <div className="flex gap-3">
-              <Avatar>
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {viewerInitials}
-                </AvatarFallback>
-              </Avatar>
-              <form className="flex min-w-0 flex-1 flex-col gap-3">
-                <CommentTextArea />
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="ghost">
-                    Cancelar
-                  </Button>
-                  <Button type="button">Comentar</Button>
-                </div>
-              </form>
-            </div>
-
-            {page.comments.length > 0 ? (
-              <ul className="flex flex-col gap-5" aria-label="Comentários">
-                {page.comments.map((comment) => (
-                  <li key={comment.id} className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>{comment.authorInitials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <p className="text-sm font-semibold">
-                        {comment.authorName}
-                        <span className="ml-2 font-normal text-muted-foreground">
-                          {comment.publishedLabel}
-                        </span>
-                      </p>
-                      <p className="text-sm leading-6">{comment.text}</p>
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {comment.likesLabel}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
+          <VideoComments
+            videoId={page.video.id}
+            viewerInitials={viewerInitials}
+            initialComments={page.comments}
+            initialNextCursor={page.commentsNextCursor}
+          />
         </div>
 
         <RelatedVideos page={page} />
