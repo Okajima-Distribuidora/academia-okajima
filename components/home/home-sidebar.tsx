@@ -27,7 +27,6 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -66,7 +65,7 @@ export function HomeSidebar({
   const pathname = usePathname();
   const active = getHomeSection(params.get("secao"));
   const searching = !!normalizeHomeSearch(params.get("q"));
-  const { isMobile, setOpenMobile } = useSidebar();
+  const { isMobile, setOpen, setOpenMobile } = useSidebar();
   const selectedCategoryId = categories.find(
     (category) => !searching && pathname === categoryHref(category),
   )?.id;
@@ -95,22 +94,11 @@ export function HomeSidebar({
 
         return (
           <SidebarMenuItem key={category.id}>
-            <SidebarMenuButton
-              render={<Link href={href} />}
-              isActive={selected}
-              tooltip={category.label}
-              aria-label={`Abrir categoria ${category.label}`}
-              aria-current={selected ? "page" : undefined}
-              onClick={closeMobileSidebar}
-              className="home-nav-item group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-0!"
-            >
-              <IconCategory aria-hidden="true" stroke={1.7} />
-              <span>{category.label}</span>
-            </SidebarMenuButton>
             <Collapsible
               className="group/category"
               open={openCategoryIds.has(category.id)}
               onOpenChange={(open) => {
+                if (open && !isMobile) setOpen(true);
                 setOpenCategoryIds((currentIds) => {
                   const nextIds = new Set(currentIds);
                   if (open) nextIds.add(category.id);
@@ -121,14 +109,19 @@ export function HomeSidebar({
             >
               <CollapsibleTrigger
                 render={
-                  <SidebarMenuAction
+                  <SidebarMenuButton
+                    isActive={selected}
+                    tooltip={category.label}
                     aria-label={`Alternar subcategorias de ${category.label}`}
+                    className="home-nav-item group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-0!"
                   />
                 }
               >
+                <IconCategory aria-hidden="true" stroke={1.7} />
+                <span>{category.label}</span>
                 <IconChevronDown
                   aria-hidden="true"
-                  className="transition-transform group-data-open/category:rotate-180"
+                  className="ml-auto transition-transform group-data-[collapsible=icon]:hidden group-data-open/category:rotate-180"
                 />
               </CollapsibleTrigger>
               {category.subcategories.length > 0 ? (
