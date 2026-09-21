@@ -10,7 +10,7 @@ import {
 } from "@tabler/icons-react";
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { Brand } from "@/components/brand";
 import { ThemeSelector } from "@/components/theme-selector";
 import { Button } from "@/components/ui/button";
@@ -66,13 +66,15 @@ export function HomeSidebar({
   const active = getHomeSection(params.get("secao"));
   const searching = !!normalizeHomeSearch(params.get("q"));
   const { isMobile, setOpen, setOpenMobile } = useSidebar();
-  const pendingScrollCleanup = useRef<(() => void) | null>(null);
   const selectedCategoryId = categories.find(
     (category) => !searching && pathname === categoryHref(category),
   )?.id;
   const [openCategoryIds, setOpenCategoryIds] = useState<Set<string>>(
     () => new Set(selectedCategoryId ? [selectedCategoryId] : []),
   );
+  const [pendingScrollTargetId, setPendingScrollTargetId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (!selectedCategoryId) return;
@@ -84,18 +86,11 @@ export function HomeSidebar({
   }, [selectedCategoryId]);
 
   useEffect(() => {
-    return () => pendingScrollCleanup.current?.();
-  }, []);
+    if (!pendingScrollTargetId) return;
 
-  function closeMobileSidebar() {
-    if (isMobile) setOpenMobile(false);
-  }
-
-  function scrollToSubcategory(targetId: string) {
-    pendingScrollCleanup.current?.();
-
+    let timeout: number | undefined;
     const scrollWhenAvailable = () => {
-      const target = document.getElementById(targetId);
+      const target = document.getElementById(pendingScrollTargetId);
       if (!target) return false;
 
       target.scrollIntoView({
@@ -105,26 +100,26 @@ export function HomeSidebar({
           : "smooth",
         block: "start",
       });
+      setPendingScrollTargetId(null);
       return true;
     };
 
     if (scrollWhenAvailable()) return;
 
     const observer = new MutationObserver(() => {
-      if (scrollWhenAvailable()) cleanup();
+      if (scrollWhenAvailable()) observer.disconnect();
     });
-    let timeout: number;
-    const cleanup = () => {
-      observer.disconnect();
-      window.clearTimeout(timeout);
-      if (pendingScrollCleanup.current === cleanup) {
-        pendingScrollCleanup.current = null;
-      }
-    };
-
-    pendingScrollCleanup.current = cleanup;
     observer.observe(document.body, { childList: true, subtree: true });
-    timeout = window.setTimeout(cleanup, 5_000);
+    timeout = window.setTimeout(() => observer.disconnect(), 5_000);
+
+    return () => {
+      observer.disconnect();
+      if (timeout !== undefined) window.clearTimeout(timeout);
+    };
+  }, [pathname, pendingScrollTargetId]);
+
+  function closeMobileSidebar() {
+    if (isMobile) setOpenMobile(false);
   }
 
   function item(section: (typeof navigation)[number]) {
@@ -199,7 +194,7 @@ export function HomeSidebar({
                                 shouldScrollToSubcategory &&
                                 isPrimaryNavigation
                               ) {
-                                scrollToSubcategory(targetId);
+                                setPendingScrollTargetId(targetId);
                               }
                               closeMobileSidebar();
                             }}
