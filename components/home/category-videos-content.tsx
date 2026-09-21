@@ -1,5 +1,6 @@
 import { IconCategory, IconVideo } from "@tabler/icons-react";
 
+import { CategoryHashScroll } from "@/components/home/category-hash-scroll";
 import { VideoCarousel } from "@/components/home/video-carousel";
 import {
   Empty,
@@ -52,9 +53,11 @@ export function CategoryVideosSkeleton() {
 export function CategoryVideosContent({
   page,
   progress,
+  scrollTargetId = null,
 }: {
   page: CategoryVideosPage;
   progress: CategoryProgressOverview;
+  scrollTargetId?: string | null;
 }) {
   const progressBySubcategory = new Map(
     progress.subcategories.map(
@@ -135,6 +138,7 @@ export function CategoryVideosContent({
           </EmptyHeader>
         </Empty>
       )}
+      <CategoryHashScroll targetId={scrollTargetId} />
     </main>
   );
 }

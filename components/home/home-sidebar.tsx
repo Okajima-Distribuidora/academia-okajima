@@ -72,9 +72,6 @@ export function HomeSidebar({
   const [openCategoryIds, setOpenCategoryIds] = useState<Set<string>>(
     () => new Set(selectedCategoryId ? [selectedCategoryId] : []),
   );
-  const [pendingScrollTargetId, setPendingScrollTargetId] = useState<
-    string | null
-  >(null);
 
   useEffect(() => {
     if (!selectedCategoryId) return;
@@ -84,39 +81,6 @@ export function HomeSidebar({
       return new Set([...currentIds, selectedCategoryId]);
     });
   }, [selectedCategoryId]);
-
-  useEffect(() => {
-    if (!pendingScrollTargetId) return;
-
-    let timeout: number | undefined;
-    const scrollWhenAvailable = () => {
-      const target = document.getElementById(pendingScrollTargetId);
-      if (!target) return false;
-
-      target.scrollIntoView({
-        behavior: window.matchMedia("(prefers-reduced-motion: reduce)")
-          .matches
-          ? "auto"
-          : "smooth",
-        block: "start",
-      });
-      setPendingScrollTargetId(null);
-      return true;
-    };
-
-    if (scrollWhenAvailable()) return;
-
-    const observer = new MutationObserver(() => {
-      if (scrollWhenAvailable()) observer.disconnect();
-    });
-    observer.observe(document.body, { childList: true, subtree: true });
-    timeout = window.setTimeout(() => observer.disconnect(), 5_000);
-
-    return () => {
-      observer.disconnect();
-      if (timeout !== undefined) window.clearTimeout(timeout);
-    };
-  }, [pathname, pendingScrollTargetId]);
 
   function closeMobileSidebar() {
     if (isMobile) setOpenMobile(false);
@@ -167,7 +131,6 @@ export function HomeSidebar({
                   >
                     {category.subcategories.map((subcategory, index) => {
                       const shouldScrollToSubcategory = index > 0;
-                      const targetId = `category-subcategory-${subcategory.id}-title`;
 
                       return (
                         <SidebarMenuSubItem key={subcategory.id}>
@@ -179,23 +142,9 @@ export function HomeSidebar({
                                   subcategory,
                                   shouldScrollToSubcategory,
                                 )}
-                                scroll={!shouldScrollToSubcategory}
                               />
                             }
-                            onClick={(event) => {
-                              const isPrimaryNavigation =
-                                event.button === 0 &&
-                                !event.metaKey &&
-                                !event.ctrlKey &&
-                                !event.shiftKey &&
-                                !event.altKey;
-
-                              if (
-                                shouldScrollToSubcategory &&
-                                isPrimaryNavigation
-                              ) {
-                                setPendingScrollTargetId(targetId);
-                              }
+                            onClick={() => {
                               closeMobileSidebar();
                             }}
                           >
@@ -249,7 +198,7 @@ export function HomeSidebar({
           </Button>
         </div>
       </SidebarHeader>
-      <SidebarContent>
+      <SidebarContent data-lenis-prevent>
         <SidebarGroup className="px-3 pt-5 pb-3">
           <SidebarGroupContent>
             <nav aria-label="Conteúdos da academia">
