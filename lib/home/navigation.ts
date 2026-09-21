@@ -42,6 +42,13 @@ export function categoryHref(category: { slug: string }) {
   return `/categoria-${encodeURIComponent(category.slug)}`;
 }
 
+export function categorySubcategoryHref(
+  category: { slug: string },
+  subcategory: { id: string },
+) {
+  return `${categoryHref(category)}#category-subcategory-${encodeURIComponent(subcategory.id)}-title`;
+}
+
 export function videoWatchHref(
   category: { slug: string },
   video: { vimeoId: string | null },

@@ -27,6 +27,7 @@ import {
   SidebarGroupContent,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarMenuSub,
@@ -37,6 +38,7 @@ import {
 import type { HomeCategoryNavigation } from "@/lib/home/catalog";
 import {
   categoryHref,
+  categorySubcategoryHref,
   getHomeSection,
   homeSectionHref,
   homeSections,
@@ -93,7 +95,20 @@ export function HomeSidebar({
 
         return (
           <SidebarMenuItem key={category.id}>
+            <SidebarMenuButton
+              render={<Link href={href} />}
+              isActive={selected}
+              tooltip={category.label}
+              aria-label={`Abrir categoria ${category.label}`}
+              aria-current={selected ? "page" : undefined}
+              onClick={closeMobileSidebar}
+              className="home-nav-item group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-0!"
+            >
+              <IconCategory aria-hidden="true" stroke={1.7} />
+              <span>{category.label}</span>
+            </SidebarMenuButton>
             <Collapsible
+              className="group/category"
               open={openCategoryIds.has(category.id)}
               onOpenChange={(open) => {
                 setOpenCategoryIds((currentIds) => {
@@ -106,20 +121,14 @@ export function HomeSidebar({
             >
               <CollapsibleTrigger
                 render={
-                  <SidebarMenuButton
-                    isActive={selected}
-                    tooltip={category.label}
+                  <SidebarMenuAction
                     aria-label={`Alternar subcategorias de ${category.label}`}
-                    className="home-nav-item group/category-toggle group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-0!"
                   />
                 }
               >
-                <IconCategory aria-hidden="true" stroke={1.7} />
-                <span>{category.label}</span>
                 <IconChevronDown
-                  data-icon="inline-end"
                   aria-hidden="true"
-                  className="ml-auto transition-transform group-data-[collapsible=icon]:hidden group-data-[panel-open]/category-toggle:rotate-180"
+                  className="transition-transform group-data-open/category:rotate-180"
                 />
               </CollapsibleTrigger>
               {category.subcategories.length > 0 ? (
@@ -130,7 +139,11 @@ export function HomeSidebar({
                     {category.subcategories.map((subcategory) => (
                       <SidebarMenuSubItem key={subcategory.id}>
                         <SidebarMenuSubButton
-                          render={<Link href={href} />}
+                          render={
+                            <Link
+                              href={categorySubcategoryHref(category, subcategory)}
+                            />
+                          }
                           onClick={closeMobileSidebar}
                         >
                           <span>{subcategory.label}</span>
