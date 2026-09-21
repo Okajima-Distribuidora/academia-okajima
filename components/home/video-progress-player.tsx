@@ -13,12 +13,16 @@ export function VideoProgressPlayer({
   title,
   resumePositionSeconds,
   isStudioAdmin,
+  autoPlay = false,
+  onEnded,
 }: {
   videoId: number;
   vimeoId: string;
   title: string;
   resumePositionSeconds: number;
   isStudioAdmin: boolean;
+  autoPlay?: boolean;
+  onEnded?: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const latestPositionRef = useRef(0);
@@ -26,6 +30,11 @@ export function VideoProgressPlayer({
   const savedPositionRef = useRef(resumePositionSeconds);
   const playerRef = useRef<Player | null>(null);
   const viewRequestedRef = useRef(false);
+  const onEndedRef = useRef(onEnded);
+
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
 
   const playerUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -162,6 +171,7 @@ export function VideoProgressPlayer({
           wantsPlaying = false;
           watch.playing(false, true);
           checkpoint();
+          onEndedRef.current?.();
         });
         player.on("error", () => {
           wantsPlaying = false;
@@ -171,6 +181,9 @@ export function VideoProgressPlayer({
         if (!(await player.getPaused())) {
           wantsPlaying = true;
           watch.playing(true);
+        }
+        if (autoPlay) {
+          await player.play().catch(() => undefined);
         }
       } catch {
         // O vídeo continua disponível pelo iframe mesmo se a integração falhar.
@@ -207,7 +220,7 @@ export function VideoProgressPlayer({
       playerRef.current = null;
       player?.unload().catch(() => undefined);
     };
-  }, [resumePositionSeconds, videoId]);
+  }, [autoPlay, resumePositionSeconds, videoId]);
 
   return (
     <div className="watch-player">

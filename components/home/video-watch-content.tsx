@@ -1,5 +1,9 @@
+"use client";
+
 import { IconVideo } from "@tabler/icons-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
 
 import { RecentVideoCardContent } from "@/components/home/recent-video-card-content";
 import { VideoComments } from "@/components/home/video-comments";
@@ -14,8 +18,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import type { VideoWatchPage } from "@/lib/home/catalog";
 import { videoWatchHref } from "@/lib/home/navigation";
 
@@ -37,7 +43,19 @@ function userInitials(viewer: WatchViewer) {
   return initialsFrom(viewer.name || viewer.rca, "US");
 }
 
-function RelatedVideos({ page }: { page: VideoWatchPage }) {
+const AUTOPLAY_PREFERENCE_KEY = "academy.video-autoplay";
+
+function RelatedVideos({
+  page,
+  autoPlay,
+  onAutoPlayChange,
+  onNavigate,
+}: {
+  page: VideoWatchPage;
+  autoPlay: boolean;
+  onAutoPlayChange: (checked: boolean) => void;
+  onNavigate: (href: string) => void;
+}) {
   return (
     <aside
       className="watch-related flex min-w-0 flex-col gap-4"
@@ -46,6 +64,15 @@ function RelatedVideos({ page }: { page: VideoWatchPage }) {
       <h2 id="related-videos-title" className="text-base font-semibold">
         Vídeos relacionados
       </h2>
+      <Field orientation="horizontal" className="justify-between">
+        <FieldLabel htmlFor="video-autoplay">Reprodução automática</FieldLabel>
+        <Switch
+          id="video-autoplay"
+          aria-label="Reprodução automática"
+          checked={autoPlay}
+          onCheckedChange={onAutoPlayChange}
+        />
+      </Field>
       <Separator />
       {page.relatedVideos.length > 0 ? (
         <ul className="flex flex-col gap-3">
@@ -55,6 +82,10 @@ function RelatedVideos({ page }: { page: VideoWatchPage }) {
                 href={videoWatchHref(page.category, video)}
                 className="watch-related-card"
                 aria-label={`Abrir ${video.title}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onNavigate(videoWatchHref(page.category, video));
+                }}
               >
                 <RecentVideoCardContent
                   video={video}
@@ -146,14 +177,49 @@ export function VideoWatchContent({
   viewer,
   resumePositionSeconds,
   isStudioAdmin,
+  autoPlay = false,
 }: {
   page: VideoWatchPage;
   viewer: WatchViewer;
   resumePositionSeconds: number;
   isStudioAdmin: boolean;
+  autoPlay?: boolean;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [navigatingFromVideoId, setNavigatingFromVideoId] = useState<
+    number | null
+  >(null);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const categoryInitials = initialsFrom(page.category.label);
   const viewerInitials = userInitials(viewer);
+  const nextVideo = page.relatedVideos[0] ?? null;
+  const isNavigating = navigatingFromVideoId === page.video.id;
+
+  useEffect(() => {
+    setAutoPlayEnabled(
+      window.localStorage.getItem(AUTOPLAY_PREFERENCE_KEY) === "true",
+    );
+  }, []);
+
+  const setAutoPlayPreference = useCallback((checked: boolean) => {
+    setAutoPlayEnabled(checked);
+    window.localStorage.setItem(AUTOPLAY_PREFERENCE_KEY, String(checked));
+  }, []);
+
+  const navigateToVideo = useCallback(
+    (href: string, shouldAutoPlay = false) => {
+      if (isNavigating) return;
+      const destination = shouldAutoPlay
+        ? `${href}${href.includes("?") ? "&" : "?"}autoplay=1`
+        : href;
+      setNavigatingFromVideoId(page.video.id);
+      startTransition(() => router.push(destination));
+    },
+    [isNavigating, page.video.id, router],
+  );
+
+  if (isNavigating || isPending) return <VideoWatchSkeleton />;
 
   return (
     <main
@@ -170,6 +236,14 @@ export function VideoWatchContent({
               title={page.video.title}
               resumePositionSeconds={resumePositionSeconds}
               isStudioAdmin={isStudioAdmin}
+              autoPlay={autoPlay}
+              onEnded={() => {
+                if (!autoPlayEnabled || !nextVideo) return;
+                navigateToVideo(
+                  videoWatchHref(page.category, nextVideo),
+                  true,
+                );
+              }}
             />
 
             <div className="flex flex-col gap-3">
@@ -227,7 +301,12 @@ export function VideoWatchContent({
           />
         </div>
 
-        <RelatedVideos page={page} />
+        <RelatedVideos
+          page={page}
+          autoPlay={autoPlayEnabled}
+          onAutoPlayChange={setAutoPlayPreference}
+          onNavigate={navigateToVideo}
+        />
       </div>
     </main>
   );

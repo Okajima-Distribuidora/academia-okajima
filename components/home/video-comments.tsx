@@ -21,7 +21,11 @@ function formatCommentsCount(count: number) {
 
 function CommentSkeletons() {
   return (
-    <div className="flex flex-col gap-5" aria-label="Carregando comentários" aria-live="polite">
+    <div
+      role="status"
+      className="flex flex-col gap-5"
+      aria-label="Carregando comentários"
+    >
       {Array.from({ length: 3 }, (_, index) => (
         <div key={index} className="flex gap-3" aria-hidden="true">
           <Skeleton className="size-9 shrink-0 rounded-full" />
