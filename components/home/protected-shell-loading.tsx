@@ -46,27 +46,34 @@ export function ProtectedShellLoading() {
       </header>
       <div className="flex min-w-0 flex-1">
         <LoadingSidebar />
-        <main
-          id="conteudo"
-          className="flex min-w-0 flex-1 flex-col gap-8 p-5 sm:p-8 lg:px-10"
-        >
-          <section className="flex flex-col gap-4">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="aspect-[16/7] w-full rounded-xl" />
-          </section>
-          <section className="flex flex-col gap-4">
-            <Skeleton className="h-6 w-40" />
-            <div className="flex gap-4 overflow-hidden">
-              {Array.from({ length: 4 }, (_, index) => (
-                <Skeleton
-                  key={index}
-                  className="h-44 w-72 shrink-0 rounded-lg"
-                />
-              ))}
-            </div>
-          </section>
-        </main>
+        <ProtectedContentLoading />
       </div>
     </div>
+  );
+}
+
+/**
+ * Route-level fallback rendered inside the resolved protected shell.
+ * It deliberately contains only page content to avoid nesting a second sidebar.
+ */
+export function ProtectedContentLoading() {
+  return (
+    <main
+      id="conteudo"
+      className="flex min-w-0 flex-1 flex-col gap-8 p-5 sm:p-8 lg:px-10"
+    >
+      <section className="flex flex-col gap-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="aspect-[16/7] w-full rounded-xl" />
+      </section>
+      <section className="flex flex-col gap-4">
+        <Skeleton className="h-6 w-40" />
+        <div className="flex gap-4 overflow-hidden">
+          {Array.from({ length: 4 }, (_, index) => (
+            <Skeleton key={index} className="h-44 w-72 shrink-0 rounded-lg" />
+          ))}
+        </div>
+      </section>
+    </main>
   );
 }

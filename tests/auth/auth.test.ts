@@ -424,7 +424,7 @@ test("aceita uma URL MySQL completa e recusa formatos inválidos", () => {
     idleTimeout: 60_000,
     connectTimeout: 5_000,
     waitForConnections: true,
-    queueLimit: 20,
+    queueLimit: 0,
     multipleStatements: false,
   });
   for (const invalid of [
