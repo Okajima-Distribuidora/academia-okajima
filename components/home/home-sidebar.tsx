@@ -185,14 +185,24 @@ export function HomeSidebar({
                                   shouldScrollToSubcategory,
                                 )}
                                 scroll={!shouldScrollToSubcategory}
-                                onNavigate={
-                                  shouldScrollToSubcategory
-                                    ? () => scrollToSubcategory(targetId)
-                                    : undefined
-                                }
                               />
                             }
-                            onClick={closeMobileSidebar}
+                            onClick={(event) => {
+                              const isPrimaryNavigation =
+                                event.button === 0 &&
+                                !event.metaKey &&
+                                !event.ctrlKey &&
+                                !event.shiftKey &&
+                                !event.altKey;
+
+                              if (
+                                shouldScrollToSubcategory &&
+                                isPrimaryNavigation
+                              ) {
+                                scrollToSubcategory(targetId);
+                              }
+                              closeMobileSidebar();
+                            }}
                           >
                             <span>{subcategory.label}</span>
                           </SidebarMenuSubButton>
