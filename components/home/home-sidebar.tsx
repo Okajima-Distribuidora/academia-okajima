@@ -129,12 +129,16 @@ export function HomeSidebar({
                   <SidebarMenuSub
                     aria-label={`Subcategorias de ${category.label}`}
                   >
-                    {category.subcategories.map((subcategory) => (
+                    {category.subcategories.map((subcategory, index) => (
                       <SidebarMenuSubItem key={subcategory.id}>
                         <SidebarMenuSubButton
                           render={
                             <Link
-                              href={categorySubcategoryHref(category, subcategory)}
+                              href={categorySubcategoryHref(
+                                category,
+                                subcategory,
+                                index > 0,
+                              )}
                             />
                           }
                           onClick={closeMobileSidebar}

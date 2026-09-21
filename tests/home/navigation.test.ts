@@ -48,6 +48,14 @@ test("home: seções inválidas retornam ao início, sem destinos externos", () 
     "/categoria-vendas#category-subcategory-subcategory%2010-title",
   );
   assert.equal(
+    categorySubcategoryHref(
+      { slug: "vendas" },
+      { id: "subcategory 10" },
+      false,
+    ),
+    "/categoria-vendas",
+  );
+  assert.equal(
     videoWatchHref({ slug: "vendas" }, { vimeoId: "1131716018" }),
     "/categoria-vendas/watch?v=1131716018",
   );

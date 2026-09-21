@@ -45,7 +45,10 @@ export function categoryHref(category: { slug: string }) {
 export function categorySubcategoryHref(
   category: { slug: string },
   subcategory: { id: string },
+  shouldScrollToSubcategory = true,
 ) {
+  if (!shouldScrollToSubcategory) return categoryHref(category);
+
   return `${categoryHref(category)}#category-subcategory-${encodeURIComponent(subcategory.id)}-title`;
 }
 
