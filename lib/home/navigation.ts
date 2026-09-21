@@ -42,6 +42,16 @@ export function categoryHref(category: { slug: string }) {
   return `/categoria-${encodeURIComponent(category.slug)}`;
 }
 
+export function categorySubcategoryHref(
+  category: { slug: string },
+  subcategory: { id: string },
+  shouldScrollToSubcategory = true,
+) {
+  if (!shouldScrollToSubcategory) return categoryHref(category);
+
+  return `${categoryHref(category)}?subcategoria=${encodeURIComponent(subcategory.id)}`;
+}
+
 export function videoWatchHref(
   category: { slug: string },
   video: { vimeoId: string | null },

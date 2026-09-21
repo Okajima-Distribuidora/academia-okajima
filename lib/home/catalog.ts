@@ -2,6 +2,7 @@ import "server-only";
 
 import { sql } from "kysely";
 import { getDb } from "@/lib/db";
+import { getVideoReactionSummary } from "@/lib/home/video-reactions";
 import { videoWatchHref } from "@/lib/home/navigation";
 import { getVimeoVideoPresentation } from "@/lib/vimeo/videos";
 
@@ -118,13 +119,25 @@ export interface VideoComment {
   likesLabel: string;
 }
 
+export interface VideoCommentCursor {
+  pinned: number;
+  time: number;
+  id: number;
+}
+
+export interface VideoCommentsPage {
+  comments: VideoComment[];
+  nextCursor: VideoCommentCursor | null;
+}
+
 export interface VideoWatchPage {
   category: HomeCategory;
   subcategories: HomeSubcategory[];
   video: RecentVideo;
-  likesLabel: string;
-  commentsLabel: string;
+  likesCount: number;
+  viewerReaction: "like" | "dislike" | null;
   comments: VideoComment[];
+  commentsNextCursor: VideoCommentCursor | null;
   relatedVideos: RecentVideo[];
 }
 
@@ -454,19 +467,36 @@ export async function listHomeCategoryNavigation(): Promise<
   HomeCategoryNavigation[]
 > {
   const categories = await listHomeCategories();
-  const subcategories = await listSubcategories(categories);
+  const [subcategories, linkedSubcategories] = await Promise.all([
+    listSubcategories(categories),
+    publicVideosQuery()
+      .innerJoin(
+        "academy_video_subcategories",
+        "academy_video_subcategories.video_id",
+        "videos.id",
+      )
+      .select("academy_video_subcategories.subcategory_id")
+      .distinct()
+      .execute(),
+  ]);
+  const subcategoriesWithPublicVideos = new Set(
+    linkedSubcategories.map((row) => String(row.subcategory_id)),
+  );
   const subcategoriesByCategory = new Map<string, HomeSubcategory[]>();
 
   for (const subcategory of subcategories) {
+    if (!subcategoriesWithPublicVideos.has(subcategory.id)) continue;
     const current = subcategoriesByCategory.get(subcategory.categoryId) ?? [];
     current.push(subcategory);
     subcategoriesByCategory.set(subcategory.categoryId, current);
   }
 
-  return categories.map((category) => ({
-    ...category,
-    subcategories: subcategoriesByCategory.get(category.id) ?? [],
-  }));
+  return categories.flatMap((category) => {
+    const visibleSubcategories = subcategoriesByCategory.get(category.id) ?? [];
+    return visibleSubcategories.length > 0
+      ? [{ ...category, subcategories: visibleSubcategories }]
+      : [];
+  });
 }
 
 async function listSubcategoryVideos(subcategory: HomeSubcategory) {
@@ -611,7 +641,7 @@ export function normalizeRecentVideosPage(
   return Number.isSafeInteger(page) && page > 0 ? page : 1;
 }
 
-async function presentRecentVideos(
+export async function presentRecentVideos(
   rows: readonly PresentedVideoRow[],
   categoryLabels: Map<number, VideoCategorySummary>,
 ): Promise<RecentVideo[]> {
@@ -817,21 +847,17 @@ export async function getCategoryVideosPage(
   };
 }
 
-async function countVideoLikes(videoId: number): Promise<number> {
-  const row = await getDb()
-    .selectFrom("likes_dislikes")
-    .select(({ fn }) => fn.countAll<number>().as("total"))
-    .where("video_id", "=", videoId)
-    .where("type", "=", 1)
-    .executeTakeFirst();
+export const VIDEO_COMMENTS_PAGE_SIZE = 20;
 
-  return Number(row?.total ?? 0);
-}
-
-export async function listVideoComments(
-  videoId: number,
-): Promise<VideoComment[]> {
-  const rows = await getDb()
+export async function listVideoCommentsPage({
+  videoId,
+  cursor,
+}: {
+  videoId: number;
+  cursor?: VideoCommentCursor | null;
+}): Promise<VideoCommentsPage> {
+  const pinnedValue = sql<number>`coalesce(${sql.ref("comments.pinned")}, 0)`;
+  let query = getDb()
     .selectFrom("comments")
     .leftJoin("users", "users.id", "comments.user_id")
     .select([
@@ -839,18 +865,42 @@ export async function listVideoComments(
       "comments.text as text",
       "comments.time as time",
       "comments.likes as likes",
+      pinnedValue.as("pinned"),
       "users.username as username",
       "users.first_name as firstName",
       "users.last_name as lastName",
     ])
-    .where("comments.video_id", "=", videoId)
-    .orderBy("comments.pinned", "desc")
+    .where("comments.video_id", "=", videoId);
+
+  if (cursor) {
+    query = query.where((eb) =>
+      eb.or([
+        eb(pinnedValue, "<", cursor.pinned),
+        eb.and([
+          eb(pinnedValue, "=", cursor.pinned),
+          eb("comments.time", "<", cursor.time),
+        ]),
+        eb.and([
+          eb(pinnedValue, "=", cursor.pinned),
+          eb("comments.time", "=", cursor.time),
+          eb("comments.id", "<", cursor.id),
+        ]),
+      ]),
+    );
+  }
+
+  const rows = await query
+    .orderBy(pinnedValue, "desc")
     .orderBy("comments.time", "desc")
     .orderBy("comments.id", "desc")
-    .limit(20)
+    .limit(VIDEO_COMMENTS_PAGE_SIZE + 1)
     .execute();
 
-  return rows.flatMap((comment) => {
+  const hasNextPage = rows.length > VIDEO_COMMENTS_PAGE_SIZE;
+  const pageRows = rows.slice(0, VIDEO_COMMENTS_PAGE_SIZE);
+
+  return {
+    comments: pageRows.flatMap((comment) => {
     const text = decodeLegacyText(comment.text?.trim() ?? "");
     if (!text) return [];
 
@@ -880,7 +930,22 @@ export async function listVideoComments(
           .replace("visualização", "like"),
       },
     ];
-  });
+    }),
+    nextCursor:
+      hasNextPage && pageRows.length > 0
+        ? {
+            pinned: Number(pageRows.at(-1)?.pinned ?? 0),
+            time: pageRows.at(-1)!.time,
+            id: pageRows.at(-1)!.id,
+          }
+        : null,
+  };
+}
+
+export async function listVideoComments(
+  videoId: number,
+): Promise<VideoComment[]> {
+  return (await listVideoCommentsPage({ videoId })).comments;
 }
 
 async function listVideoSubcategories(
@@ -923,6 +988,7 @@ async function listVideoSubcategories(
 export async function getVideoWatchPage(
   categorySlug: string,
   vimeoId: string,
+  viewerId?: number,
 ): Promise<VideoWatchPage | null> {
   const categoryRow = await getDb()
     .selectFrom("academy_categories")
@@ -997,14 +1063,16 @@ export async function getVideoWatchPage(
       },
     ]),
   );
-  const [video, relatedVideos, likes, comments, subcategories] =
+  const [video, relatedVideos, reactions, commentsPage, subcategories] =
     await Promise.all([
       presentRecentVideos([videoRow], categoryLabels).then(
         ([presented]) => presented,
       ),
       presentRecentVideos(relatedRows, categoryLabels),
-      countVideoLikes(videoRow.id),
-      listVideoComments(videoRow.id),
+      viewerId
+        ? getVideoReactionSummary({ videoId: videoRow.id, userId: viewerId })
+        : Promise.resolve({ likesCount: 0, viewerReaction: null }),
+      listVideoCommentsPage({ videoId: videoRow.id }),
       listVideoSubcategories(videoRow.id, category.id),
     ]);
 
@@ -1014,11 +1082,10 @@ export async function getVideoWatchPage(
     category,
     subcategories,
     video,
-    likesLabel: formatViews(likes)
-      .replace("visualizações", "likes")
-      .replace("visualização", "like"),
-    commentsLabel: `${new Intl.NumberFormat("pt-BR").format(comments.length)} ${comments.length === 1 ? "comentário" : "comentários"}`,
-    comments,
+    likesCount: reactions.likesCount,
+    viewerReaction: reactions.viewerReaction,
+    comments: commentsPage.comments,
+    commentsNextCursor: commentsPage.nextCursor,
     relatedVideos,
   };
 }

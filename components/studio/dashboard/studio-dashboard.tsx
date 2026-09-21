@@ -51,6 +51,7 @@ type StudioStats = {
   summary: {
     views: number;
     watchHours: number;
+    watchHistory: Array<{ date: string; watchHours: number }>;
     totalVideos: number;
     viewHistory: Array<{
       date: string;
@@ -177,7 +178,7 @@ function OverviewMetricChart({ stats }: { stats: StudioStats }) {
     watchHours: {
       label: "Tempo de exibição",
       value: `${formatStudioDecimal(stats.summary.watchHours)} h`,
-      description: "Tempo total assistido",
+      description: "Tempo assistido desde o início da medição",
       chartValue: stats.summary.watchHours,
     },
     videos: {
@@ -198,7 +199,7 @@ function OverviewMetricChart({ stats }: { stats: StudioStats }) {
           tooltipDay: entry.rangeLabel,
           metric: entry.videos,
         }))
-      : stats.summary.viewHistory.map((entry, index, history) => {
+      : stats.summary.viewHistory.map((entry) => {
           const formattedDay = chartDateFormatter.format(
             new Date(`${entry.date}T12:00:00Z`),
           );
@@ -209,9 +210,9 @@ function OverviewMetricChart({ stats }: { stats: StudioStats }) {
             metric:
               metric === "views"
                 ? entry.views
-                : index === history.length - 1
-                  ? activeMetric.chartValue
-                  : 0,
+                : (stats.summary.watchHistory.find(
+                    (day) => day.date === entry.date,
+                  )?.watchHours ?? 0),
           };
         });
   const axisTickDates = chartData

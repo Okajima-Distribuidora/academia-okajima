@@ -1,17 +1,17 @@
 "use client";
 
-import { Input } from "antd";
+import { Textarea } from "@/components/ui/textarea";
 
-const { TextArea } = Input;
-
-export function CommentTextArea() {
+export function CommentTextArea(
+  props: React.ComponentProps<typeof Textarea>,
+) {
   return (
-    <TextArea
+    <Textarea
       rows={4}
       placeholder="Adicione um comentário"
       aria-label="Adicionar comentário"
-      autoSize={{ minRows: 3, maxRows: 6 }}
-      className="comment-text-area"
+      className="comment-text-area min-h-24 resize-y"
+      {...props}
     />
   );
 }

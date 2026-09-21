@@ -130,7 +130,7 @@ export function HomeContent({
     );
   }
 
-  if (!query && section.id === "biblioteca" && libraryPages) {
+  if (section.id === "biblioteca" && libraryPages && libraryPages.length > 0) {
     return <LibraryContent section={section} pages={libraryPages} />;
   }
 
@@ -165,8 +165,9 @@ export function HomeContent({
               : "Seu espaço de vídeos está sendo preparado"}
           </EmptyTitle>
           <EmptyDescription>
-            Esta é a estrutura inicial da home. Os vídeos do Vimeo serão
-            conectados na próxima etapa.
+            {isLibrary
+              ? "A biblioteca será implementada em uma próxima etapa, reunindo documentos, guias e materiais de apoio da academia."
+              : "Esta é a estrutura inicial da home. Os vídeos do Vimeo serão conectados na próxima etapa."}
           </EmptyDescription>
         </EmptyHeader>
       </Empty>

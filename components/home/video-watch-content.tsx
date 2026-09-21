@@ -1,16 +1,16 @@
-import { IconThumbDown, IconThumbUp, IconVideo } from "@tabler/icons-react";
-import Link from "next/link";
+"use client";
 
-import { CommentTextArea } from "@/components/home/comment-text-area";
+import { IconVideo } from "@tabler/icons-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useState, useTransition } from "react";
+
 import { RecentVideoCardContent } from "@/components/home/recent-video-card-content";
+import { VideoComments } from "@/components/home/video-comments";
 import { VideoProgressPlayer } from "@/components/home/video-progress-player";
+import { VideoReactions } from "@/components/home/video-reactions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  ButtonGroup,
-  ButtonGroupSeparator,
-} from "@/components/ui/button-group";
 import {
   Empty,
   EmptyDescription,
@@ -18,8 +18,10 @@ import {
   EmptyMedia,
   EmptyTitle,
 } from "@/components/ui/empty";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Switch } from "@/components/ui/switch";
 import type { VideoWatchPage } from "@/lib/home/catalog";
 import { videoWatchHref } from "@/lib/home/navigation";
 
@@ -41,7 +43,19 @@ function userInitials(viewer: WatchViewer) {
   return initialsFrom(viewer.name || viewer.rca, "US");
 }
 
-function RelatedVideos({ page }: { page: VideoWatchPage }) {
+const AUTOPLAY_PREFERENCE_KEY = "academy.video-autoplay";
+
+function RelatedVideos({
+  page,
+  autoPlay,
+  onAutoPlayChange,
+  onNavigate,
+}: {
+  page: VideoWatchPage;
+  autoPlay: boolean;
+  onAutoPlayChange: (checked: boolean) => void;
+  onNavigate: (href: string) => void;
+}) {
   return (
     <aside
       className="watch-related flex min-w-0 flex-col gap-4"
@@ -50,6 +64,15 @@ function RelatedVideos({ page }: { page: VideoWatchPage }) {
       <h2 id="related-videos-title" className="text-base font-semibold">
         Vídeos relacionados
       </h2>
+      <Field orientation="horizontal" className="justify-between">
+        <FieldLabel htmlFor="video-autoplay">Reprodução automática</FieldLabel>
+        <Switch
+          id="video-autoplay"
+          aria-label="Reprodução automática"
+          checked={autoPlay}
+          onCheckedChange={onAutoPlayChange}
+        />
+      </Field>
       <Separator />
       {page.relatedVideos.length > 0 ? (
         <ul className="flex flex-col gap-3">
@@ -59,6 +82,10 @@ function RelatedVideos({ page }: { page: VideoWatchPage }) {
                 href={videoWatchHref(page.category, video)}
                 className="watch-related-card"
                 aria-label={`Abrir ${video.title}`}
+                onClick={(event) => {
+                  event.preventDefault();
+                  onNavigate(videoWatchHref(page.category, video));
+                }}
               >
                 <RecentVideoCardContent
                   video={video}
@@ -150,14 +177,49 @@ export function VideoWatchContent({
   viewer,
   resumePositionSeconds,
   isStudioAdmin,
+  autoPlay = false,
 }: {
   page: VideoWatchPage;
   viewer: WatchViewer;
   resumePositionSeconds: number;
   isStudioAdmin: boolean;
+  autoPlay?: boolean;
 }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [navigatingFromVideoId, setNavigatingFromVideoId] = useState<
+    number | null
+  >(null);
+  const [autoPlayEnabled, setAutoPlayEnabled] = useState(false);
   const categoryInitials = initialsFrom(page.category.label);
   const viewerInitials = userInitials(viewer);
+  const nextVideo = page.relatedVideos[0] ?? null;
+  const isNavigating = navigatingFromVideoId === page.video.id;
+
+  useEffect(() => {
+    setAutoPlayEnabled(
+      window.localStorage.getItem(AUTOPLAY_PREFERENCE_KEY) === "true",
+    );
+  }, []);
+
+  const setAutoPlayPreference = useCallback((checked: boolean) => {
+    setAutoPlayEnabled(checked);
+    window.localStorage.setItem(AUTOPLAY_PREFERENCE_KEY, String(checked));
+  }, []);
+
+  const navigateToVideo = useCallback(
+    (href: string, shouldAutoPlay = false) => {
+      if (isNavigating) return;
+      const destination = shouldAutoPlay
+        ? `${href}${href.includes("?") ? "&" : "?"}autoplay=1`
+        : href;
+      setNavigatingFromVideoId(page.video.id);
+      startTransition(() => router.push(destination));
+    },
+    [isNavigating, page.video.id, router],
+  );
+
+  if (isNavigating || isPending) return <VideoWatchSkeleton />;
 
   return (
     <main
@@ -174,6 +236,14 @@ export function VideoWatchContent({
               title={page.video.title}
               resumePositionSeconds={resumePositionSeconds}
               isStudioAdmin={isStudioAdmin}
+              autoPlay={autoPlay}
+              onEnded={() => {
+                if (!autoPlayEnabled || !nextVideo) return;
+                navigateToVideo(
+                  videoWatchHref(page.category, nextVideo),
+                  true,
+                );
+              }}
             />
 
             <div className="flex flex-col gap-3">
@@ -205,33 +275,11 @@ export function VideoWatchContent({
                   </div>
 
                   <div className="watch-actions">
-                    <ButtonGroup
-                      className="watch-reaction-group"
-                      aria-label="Avaliar vídeo"
-                    >
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="lg"
-                        className="watch-reaction-like"
-                      >
-                        <IconThumbUp
-                          data-icon="inline-start"
-                          aria-hidden="true"
-                        />
-                        {page.likesLabel}
-                      </Button>
-                      <ButtonGroupSeparator />
-                      <Button
-                        type="button"
-                        variant="secondary"
-                        size="icon-lg"
-                        className="watch-reaction-dislike"
-                        aria-label="Não gostei"
-                      >
-                        <IconThumbDown aria-hidden="true" />
-                      </Button>
-                    </ButtonGroup>
+                    <VideoReactions
+                      videoId={page.video.id}
+                      initialLikesCount={page.likesCount}
+                      initialReaction={page.viewerReaction}
+                    />
                   </div>
                 </div>
               </div>
@@ -245,64 +293,20 @@ export function VideoWatchContent({
             </section>
           </section>
 
-          <section
-            className="watch-comments flex min-w-0 flex-col gap-5"
-            aria-labelledby="watch-comments-title"
-          >
-            <div className="flex items-center gap-2">
-              <h2
-                id="watch-comments-title"
-                className="text-xl font-semibold tracking-tight"
-              >
-                {page.commentsLabel}
-              </h2>
-            </div>
-
-            <div className="flex gap-3">
-              <Avatar>
-                <AvatarFallback className="bg-primary text-primary-foreground">
-                  {viewerInitials}
-                </AvatarFallback>
-              </Avatar>
-              <form className="flex min-w-0 flex-1 flex-col gap-3">
-                <CommentTextArea />
-
-                <div className="flex justify-end gap-2">
-                  <Button type="button" variant="ghost">
-                    Cancelar
-                  </Button>
-                  <Button type="button">Comentar</Button>
-                </div>
-              </form>
-            </div>
-
-            {page.comments.length > 0 ? (
-              <ul className="flex flex-col gap-5" aria-label="Comentários">
-                {page.comments.map((comment) => (
-                  <li key={comment.id} className="flex gap-3">
-                    <Avatar>
-                      <AvatarFallback>{comment.authorInitials}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex min-w-0 flex-1 flex-col gap-1">
-                      <p className="text-sm font-semibold">
-                        {comment.authorName}
-                        <span className="ml-2 font-normal text-muted-foreground">
-                          {comment.publishedLabel}
-                        </span>
-                      </p>
-                      <p className="text-sm leading-6">{comment.text}</p>
-                      <span className="text-xs font-medium text-muted-foreground">
-                        {comment.likesLabel}
-                      </span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            ) : null}
-          </section>
+          <VideoComments
+            videoId={page.video.id}
+            viewerInitials={viewerInitials}
+            initialComments={page.comments}
+            initialNextCursor={page.commentsNextCursor}
+          />
         </div>
 
-        <RelatedVideos page={page} />
+        <RelatedVideos
+          page={page}
+          autoPlay={autoPlayEnabled}
+          onAutoPlayChange={setAutoPlayPreference}
+          onNavigate={navigateToVideo}
+        />
       </div>
     </main>
   );

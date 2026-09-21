@@ -110,6 +110,14 @@ export interface AcademyVideoProgressTable {
   updated_at: Date;
 }
 
+export interface AcademyVideoReactionsTable {
+  user_id: number;
+  video_id: number;
+  reaction: "like" | "dislike";
+  created_at: Date;
+  updated_at: Date;
+}
+
 export interface ViewsTable {
   id: Generated<number>;
   video_id: number;
@@ -156,10 +164,14 @@ export interface ConfigTable {
 }
 
 export interface Database {
+  academy_video_watch_sessions: WatchSessionsTable;
+  academy_video_watch_hourly: WatchHourlyTable;
+  academy_video_watch_daily: WatchDailyTable;
   academy_categories: AcademyCategoriesTable;
   academy_subcategories: AcademySubcategoriesTable;
   academy_video_subcategories: AcademyVideoSubcategoriesTable;
   academy_video_progress: AcademyVideoProgressTable;
+  academy_video_reactions: AcademyVideoReactionsTable;
   comments: CommentsTable;
   config: ConfigTable;
   custom_pages: CustomPagesTable;
@@ -168,4 +180,30 @@ export interface Database {
   users: UsersTable;
   videos: VideosTable;
   views: ViewsTable;
+}
+
+export interface WatchSessionsTable {
+  id: string;
+  user_id: number;
+  video_id: number;
+  status: "active" | "closed" | "expired";
+  started_at_ms: number;
+  last_seen_at_ms: number;
+  expires_at_ms: number;
+  ended_at_ms: number | null;
+  last_sequence: number;
+  watched_ms: number;
+  accepted_buckets: string;
+}
+export interface WatchHourlyTable {
+  user_id: number;
+  video_id: number;
+  hour_start_ms: number;
+  watched_ms: number;
+}
+export interface WatchDailyTable {
+  user_id: number;
+  video_id: number;
+  day: string;
+  watched_ms: number;
 }

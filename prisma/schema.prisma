@@ -767,6 +767,7 @@ model users {
   video_mon             Int     @default(0)
   age_changed           Int     @default(0)
   academy_video_progress academy_video_progress[]
+  academy_video_reactions academy_video_reactions[]
   donation_paypal_email String  @default("") @db.VarChar(100)
   user_upload_limit     String  @default("0") @db.VarChar(50)
   two_factor            Int     @default(0)
@@ -1021,6 +1022,49 @@ model videos {
   @@fulltext([title], map: "title")
 }
 
+// Analytics retain scalar identities deliberately: deleting an account/video must not cascade into history.
+model academy_video_watch_sessions {
+  id               String @id @db.VarChar(36)
+  user_id          Int
+  video_id         Int
+  status           String @default("active") @db.VarChar(12)
+  started_at_ms    BigInt
+  last_seen_at_ms  BigInt
+  expires_at_ms    BigInt
+  ended_at_ms      BigInt?
+  last_sequence   Int @default(0)
+  watched_ms       Int @default(0)
+  accepted_buckets String @db.LongText
+
+  @@index([user_id, status, last_seen_at_ms], map: "watch_sessions_user_active_idx")
+  @@index([video_id, started_at_ms], map: "watch_sessions_video_started_idx")
+  @@index([status, ended_at_ms], map: "watch_sessions_ended_idx")
+}
+
+model academy_video_watch_hourly {
+  user_id       Int
+  video_id      Int
+  hour_start_ms BigInt
+  watched_ms    BigInt @default(0)
+
+  @@id([user_id, video_id, hour_start_ms])
+  @@index([video_id, hour_start_ms], map: "watch_hourly_video_hour_idx")
+  @@index([hour_start_ms], map: "watch_hourly_hour_idx")
+  @@index([user_id, hour_start_ms], map: "watch_hourly_user_hour_idx")
+}
+
+model academy_video_watch_daily {
+  user_id    Int
+  video_id   Int
+  day        String @db.VarChar(10)
+  watched_ms BigInt @default(0)
+
+  @@id([user_id, video_id, day])
+  @@index([video_id, day], map: "watch_daily_video_day_idx")
+  @@index([day], map: "watch_daily_day_idx")
+  @@index([user_id, day], map: "watch_daily_user_day_idx")
+}
+
 model academy_video_progress {
   id                        Int       @id @default(autoincrement())
   user_id                   Int
@@ -1037,6 +1081,18 @@ model academy_video_progress {
   @@unique([user_id, video_id], map: "academy_video_progress_user_video_unique")
   @@index([user_id, last_watched_at], map: "academy_video_progress_user_last_watched_idx")
   @@index([video_id], map: "academy_video_progress_video_idx")
+}
+
+model academy_video_reactions {
+  user_id    Int
+  video_id   Int
+  reaction   String   @db.VarChar(8)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt @db.DateTime(0)
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, video_id])
+  @@index([video_id, reaction], map: "academy_video_reactions_video_reaction_idx")
 }
 
 model academy_categories {

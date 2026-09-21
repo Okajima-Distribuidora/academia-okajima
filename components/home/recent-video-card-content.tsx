@@ -1,4 +1,9 @@
-import { IconPlayerPlayFilled, IconVideo } from "@tabler/icons-react";
+import {
+  IconPlayerPlayFilled,
+  IconRosetteDiscountCheck,
+  IconRosetteDiscountCheckFilled,
+  IconVideo,
+} from "@tabler/icons-react";
 import Image from "next/image";
 
 import { VideoHoverPreview } from "@/components/home/video-hover-preview";
@@ -43,8 +48,11 @@ export function RecentVideoCardContent({
       </span>
       <span className="home-recent-copy">
         <strong>{video.title}</strong>
-        <span>{video.categoryLabel ?? "Academia Okajima"}</span>
-        <span>
+        <span className="home-recent-category">
+          {video.categoryLabel ?? "Academia Okajima"}
+          <IconRosetteDiscountCheckFilled aria-hidden="true" stroke={2} />
+        </span>
+        <span className="home-recent-meta">
           {video.viewsLabel} · {video.publishedLabel}
         </span>
       </span>

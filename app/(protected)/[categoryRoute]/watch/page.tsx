@@ -19,7 +19,6 @@ export async function generateMetadata({
   const vimeoId = normalizeVimeoWatchId(
     Array.isArray(query.v) ? query.v[0] : query.v,
   );
-
   if (!categorySlug || !vimeoId) return { title: "Vídeo" };
 
   const page = await getVideoWatchPage(categorySlug, vimeoId);
@@ -35,12 +34,13 @@ export default async function VideoWatchRoute({
   const vimeoId = normalizeVimeoWatchId(
     Array.isArray(query.v) ? query.v[0] : query.v,
   );
+  const autoPlay =
+    (Array.isArray(query.autoplay) ? query.autoplay[0] : query.autoplay) ===
+    "1";
   if (!categorySlug || !vimeoId) notFound();
 
-  const [page, user] = await Promise.all([
-    getVideoWatchPage(categorySlug, vimeoId),
-    requireUser(),
-  ]);
+  const user = await requireUser();
+  const page = await getVideoWatchPage(categorySlug, vimeoId, Number(user.id));
   if (!page) notFound();
 
   const progress = await getVideoProgress({
@@ -54,6 +54,7 @@ export default async function VideoWatchRoute({
       viewer={{ name: user.name, rca: user.codigorca }}
       resumePositionSeconds={progress?.resumePositionSeconds ?? 0}
       isStudioAdmin={user.isStudioAdmin}
+      autoPlay={autoPlay}
     />
   );
 }

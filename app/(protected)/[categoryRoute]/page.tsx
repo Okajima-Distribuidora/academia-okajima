@@ -22,8 +22,12 @@ export async function generateMetadata({
 
 export default async function CategoryRoutePage({
   params,
+  searchParams,
 }: PageProps<"/[categoryRoute]">) {
-  const { categoryRoute } = await params;
+  const [{ categoryRoute }, { subcategoria }] = await Promise.all([
+    params,
+    searchParams,
+  ]);
   const slug = normalizeCategoryRoute(categoryRoute);
   if (!slug) notFound();
 
@@ -38,5 +42,19 @@ export default async function CategoryRoutePage({
     categoryId: Number(page.category.id),
   });
 
-  return <CategoryVideosContent page={page} progress={progress} />;
+  const subcategoryId =
+    typeof subcategoria === "string" &&
+    page.subcategories.some(({ subcategory }) => subcategory.id === subcategoria)
+      ? subcategoria
+      : null;
+
+  return (
+    <CategoryVideosContent
+      page={page}
+      progress={progress}
+      scrollTargetId={
+        subcategoryId ? `category-subcategory-${subcategoryId}-title` : null
+      }
+    />
+  );
 }

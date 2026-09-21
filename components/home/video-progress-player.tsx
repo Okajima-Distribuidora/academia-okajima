@@ -2,6 +2,7 @@
 
 import type Player from "@vimeo/player";
 import { useEffect, useMemo, useRef } from "react";
+import { createVideoWatchTracker } from "@/lib/home/watch-time-client";
 
 const CHECKPOINT_INTERVAL_SECONDS = 15;
 const MINIMUM_CHECKPOINT_DELTA_SECONDS = 5;
@@ -12,12 +13,16 @@ export function VideoProgressPlayer({
   title,
   resumePositionSeconds,
   isStudioAdmin,
+  autoPlay = false,
+  onEnded,
 }: {
   videoId: number;
   vimeoId: string;
   title: string;
   resumePositionSeconds: number;
   isStudioAdmin: boolean;
+  autoPlay?: boolean;
+  onEnded?: () => void;
 }) {
   const iframeRef = useRef<HTMLIFrameElement | null>(null);
   const latestPositionRef = useRef(0);
@@ -25,6 +30,11 @@ export function VideoProgressPlayer({
   const savedPositionRef = useRef(resumePositionSeconds);
   const playerRef = useRef<Player | null>(null);
   const viewRequestedRef = useRef(false);
+  const onEndedRef = useRef(onEnded);
+
+  useEffect(() => {
+    onEndedRef.current = onEnded;
+  }, [onEnded]);
 
   const playerUrl = useMemo(() => {
     const params = new URLSearchParams({
@@ -47,6 +57,10 @@ export function VideoProgressPlayer({
 
     let disposed = false;
     let player: Player | null = null;
+    const watch = createVideoWatchTracker(videoId);
+    let wantsPlaying = false;
+    let seeking = false;
+    let buffering = false;
 
     function checkpoint(useBeacon = false) {
       const positionSeconds = latestPositionRef.current;
@@ -117,12 +131,60 @@ export function VideoProgressPlayer({
           await player.setCurrentTime(resumePositionSeconds);
         }
         player.on("timeupdate", (event) => {
+          watch.sample(event.seconds);
           latestPositionRef.current = event.seconds;
           durationRef.current = event.duration;
         });
         player.on("play", recordView);
-        player.on("pause", () => checkpoint());
-        player.on("ended", () => checkpoint());
+        player.on("play", () => {
+          wantsPlaying = true;
+        });
+        player.on("playing", () => {
+          wantsPlaying = true;
+          watch.playing(!seeking && !buffering);
+        });
+        player.on("seeking", () => {
+          seeking = true;
+          watch.playing(false);
+        });
+        player.on("seeked", () => {
+          seeking = false;
+          watch.playing(wantsPlaying && !buffering);
+        });
+        player.on("bufferstart", () => {
+          buffering = true;
+          watch.playing(false);
+        });
+        player.on("bufferend", () => {
+          buffering = false;
+          watch.playing(wantsPlaying && !seeking);
+        });
+        player.on("playbackratechange", (event) =>
+          watch.rate(event.playbackRate),
+        );
+        player.on("pause", () => {
+          wantsPlaying = false;
+          watch.playing(false, true);
+          checkpoint();
+        });
+        player.on("ended", () => {
+          wantsPlaying = false;
+          watch.playing(false, true);
+          checkpoint();
+          onEndedRef.current?.();
+        });
+        player.on("error", () => {
+          wantsPlaying = false;
+          watch.playing(false, true);
+        });
+        watch.rate(await player.getPlaybackRate());
+        if (!(await player.getPaused())) {
+          wantsPlaying = true;
+          watch.playing(true);
+        }
+        if (autoPlay) {
+          await player.play().catch(() => undefined);
+        }
       } catch {
         // O vídeo continua disponível pelo iframe mesmo se a integração falhar.
       }
@@ -130,11 +192,13 @@ export function VideoProgressPlayer({
 
     function onVisibilityChange() {
       if (document.visibilityState !== "hidden") return;
+      watch.hide();
       void playerRef.current?.pause();
       checkpoint(true);
     }
 
     function onPageHide() {
+      watch.hide();
       checkpoint(true);
     }
 
@@ -152,10 +216,11 @@ export function VideoProgressPlayer({
       window.removeEventListener("pagehide", onPageHide);
       checkpoint(true);
       disposed = true;
+      watch.dispose();
       playerRef.current = null;
       player?.unload().catch(() => undefined);
     };
-  }, [resumePositionSeconds, videoId]);
+  }, [autoPlay, resumePositionSeconds, videoId]);
 
   return (
     <div className="watch-player">

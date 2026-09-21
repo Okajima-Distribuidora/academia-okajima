@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   categoryHref,
+  categorySubcategoryHref,
   getHomeSection,
   homeSectionHref,
   homeSections,
@@ -38,6 +39,21 @@ test("home: seções inválidas retornam ao início, sem destinos externos", () 
   assert.equal(
     categoryHref({ slug: "integração" }),
     "/categoria-integra%C3%A7%C3%A3o",
+  );
+  assert.equal(
+    categorySubcategoryHref(
+      { slug: "vendas" },
+      { id: "subcategory 10" },
+    ),
+    "/categoria-vendas?subcategoria=subcategory%2010",
+  );
+  assert.equal(
+    categorySubcategoryHref(
+      { slug: "vendas" },
+      { id: "subcategory 10" },
+      false,
+    ),
+    "/categoria-vendas",
   );
   assert.equal(
     videoWatchHref({ slug: "vendas" }, { vimeoId: "1131716018" }),
