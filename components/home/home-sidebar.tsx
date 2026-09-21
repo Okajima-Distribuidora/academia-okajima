@@ -108,6 +108,7 @@ export function HomeSidebar({
                 render={
                   <SidebarMenuButton
                     isActive={selected}
+                    tooltip={category.label}
                     aria-label={`Alternar subcategorias de ${category.label}`}
                     className="home-nav-item group/category-toggle group-data-[collapsible=icon]:size-11! group-data-[collapsible=icon]:p-0!"
                   />
@@ -118,7 +119,7 @@ export function HomeSidebar({
                 <IconChevronDown
                   data-icon="inline-end"
                   aria-hidden="true"
-                  className="ml-auto transition-transform group-data-[panel-open]/category-toggle:rotate-180"
+                  className="ml-auto transition-transform group-data-[collapsible=icon]:hidden group-data-[panel-open]/category-toggle:rotate-180"
                 />
               </CollapsibleTrigger>
               {category.subcategories.length > 0 ? (
