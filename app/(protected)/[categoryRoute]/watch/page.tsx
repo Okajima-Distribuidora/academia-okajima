@@ -40,7 +40,12 @@ export default async function VideoWatchRoute({
   if (!categorySlug || !vimeoId) notFound();
 
   const user = await requireUser();
-  const page = await getVideoWatchPage(categorySlug, vimeoId, Number(user.id));
+  const page = await getVideoWatchPage(
+    categorySlug,
+    vimeoId,
+    Number(user.id),
+    user.isStudioAdmin,
+  );
   if (!page) notFound();
 
   const progress = await getVideoProgress({

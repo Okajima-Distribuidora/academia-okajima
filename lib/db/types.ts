@@ -118,6 +118,59 @@ export interface AcademyVideoReactionsTable {
   updated_at: Date;
 }
 
+export interface AcademyVideoCommentReactionsTable {
+  user_id: number;
+  comment_id: number;
+  reaction: "like" | "dislike";
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface AcademyVideoCommentReplyReactionsTable {
+  user_id: number;
+  reply_id: number;
+  reaction: "like" | "dislike";
+  created_at: Date;
+  updated_at: Date;
+}
+
+export interface AcademyVideoCommentRepliesTable {
+  id: Generated<number>;
+  legacy_reply_id: number | null;
+  comment_id: number;
+  parent_reply_id: number | null;
+  user_id: number;
+  video_id: number;
+  text: string;
+  created_at: Date;
+}
+
+export interface AcademyVideoCommentPinsTable {
+  video_id: number;
+  comment_id: number;
+  pinned_by_user_id: number | null;
+  pinned_at: Date;
+  updated_at: Date;
+}
+
+export interface AcademyVideoCommentPostRateLimitsTable {
+  user_id: number;
+  window_started_at: Date;
+  post_count: number;
+  updated_at: Date;
+}
+
+export interface AcademyVideoCommentModerationTable {
+  comment_id: number;
+  video_id: number;
+  is_hidden: number;
+  hidden_at: Date | null;
+  hidden_by_user_id: number | null;
+  restored_at: Date | null;
+  restored_by_user_id: number | null;
+  updated_at: Date;
+}
+
 export interface ViewsTable {
   id: Generated<number>;
   video_id: number;
@@ -134,7 +187,7 @@ export interface CommentsTable {
   activity_id: number;
   text: string | null;
   time: number;
-  pinned: number | null;
+  pinned: "0" | "1" | null;
   likes: number;
   dis_likes: number;
 }
@@ -172,6 +225,12 @@ export interface Database {
   academy_video_subcategories: AcademyVideoSubcategoriesTable;
   academy_video_progress: AcademyVideoProgressTable;
   academy_video_reactions: AcademyVideoReactionsTable;
+  academy_video_comment_reactions: AcademyVideoCommentReactionsTable;
+  academy_video_comment_reply_reactions: AcademyVideoCommentReplyReactionsTable;
+  academy_video_comment_replies: AcademyVideoCommentRepliesTable;
+  academy_video_comment_pins: AcademyVideoCommentPinsTable;
+  academy_video_comment_post_rate_limits: AcademyVideoCommentPostRateLimitsTable;
+  academy_video_comment_moderation: AcademyVideoCommentModerationTable;
   comments: CommentsTable;
   config: ConfigTable;
   custom_pages: CustomPagesTable;

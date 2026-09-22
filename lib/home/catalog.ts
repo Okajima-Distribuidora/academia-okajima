@@ -117,6 +117,26 @@ export interface VideoComment {
   text: string;
   publishedLabel: string;
   likesLabel: string;
+  likesCount: number;
+  dislikesCount: number;
+  viewerReaction: "like" | "dislike" | null;
+  isPinned: boolean;
+  isHidden: boolean;
+  replies: VideoCommentReply[];
+}
+
+export interface VideoCommentReply {
+  id: number;
+  commentId: number;
+  parentReplyId: number | null;
+  authorName: string;
+  authorInitials: string;
+  replyToAuthorName: string | null;
+  text: string;
+  publishedLabel: string;
+  likesCount: number;
+  dislikesCount: number;
+  viewerReaction: "like" | "dislike" | null;
 }
 
 export interface VideoCommentCursor {
@@ -153,6 +173,17 @@ const CATEGORY_VIDEO_SORTS = new Set<CategoryVideoSort>([
 export function formatViews(views: number): string {
   const safeViews = Number.isFinite(views) && views > 0 ? Math.floor(views) : 0;
   return `${new Intl.NumberFormat("pt-BR").format(safeViews)} ${safeViews === 1 ? "visualização" : "visualizações"}`;
+}
+
+function initialsFrom(value: string) {
+  return (
+    value
+      .split(/\s+/)
+      .filter(Boolean)
+      .slice(0, 2)
+      .map((part) => part[0]?.toUpperCase())
+      .join("") || "A"
+  );
 }
 
 export function normalizeCategoryRoute(value: string): string | null {
@@ -852,25 +883,42 @@ export const VIDEO_COMMENTS_PAGE_SIZE = 20;
 export async function listVideoCommentsPage({
   videoId,
   cursor,
+  viewerId,
+  includeHidden = false,
 }: {
   videoId: number;
   cursor?: VideoCommentCursor | null;
+  viewerId?: number | null;
+  includeHidden?: boolean;
 }): Promise<VideoCommentsPage> {
-  const pinnedValue = sql<number>`coalesce(${sql.ref("comments.pinned")}, 0)`;
+  const pinnedValue = sql<number>`case when ${sql.ref("academy_video_comment_pins.video_id")} is null then 0 else 1 end`;
+  const hiddenValue = sql<number>`coalesce(${sql.ref("academy_video_comment_moderation.is_hidden")}, 0)`;
   let query = getDb()
     .selectFrom("comments")
     .leftJoin("users", "users.id", "comments.user_id")
+    .leftJoin("academy_video_comment_pins", (join) =>
+      join
+        .onRef("academy_video_comment_pins.comment_id", "=", "comments.id")
+        .onRef("academy_video_comment_pins.video_id", "=", "comments.video_id"),
+    )
+    .leftJoin(
+      "academy_video_comment_moderation",
+      "academy_video_comment_moderation.comment_id",
+      "comments.id",
+    )
     .select([
       "comments.id as id",
       "comments.text as text",
       "comments.time as time",
-      "comments.likes as likes",
       pinnedValue.as("pinned"),
+      hiddenValue.as("hidden"),
       "users.username as username",
       "users.first_name as firstName",
       "users.last_name as lastName",
     ])
     .where("comments.video_id", "=", videoId);
+
+  if (!includeHidden) query = query.where(hiddenValue, "=", 0);
 
   if (cursor) {
     query = query.where((eb) =>
@@ -898,38 +946,187 @@ export async function listVideoCommentsPage({
 
   const hasNextPage = rows.length > VIDEO_COMMENTS_PAGE_SIZE;
   const pageRows = rows.slice(0, VIDEO_COMMENTS_PAGE_SIZE);
-
-  return {
-    comments: pageRows.flatMap((comment) => {
-    const text = decodeLegacyText(comment.text?.trim() ?? "");
-    if (!text) return [];
-
+  const commentIds = pageRows.map((comment) => comment.id);
+  const db = getDb();
+  const [reactionRows, replyRows] = await Promise.all([
+    commentIds.length
+      ? db
+          .selectFrom("academy_video_comment_reactions")
+          .select(["comment_id", "reaction"])
+          .where("comment_id", "in", commentIds)
+          .execute()
+      : Promise.resolve([]),
+    commentIds.length
+      ? db
+          .selectFrom("academy_video_comment_replies")
+          .leftJoin(
+            "users",
+            "users.id",
+            "academy_video_comment_replies.user_id",
+          )
+          .leftJoin(
+            "academy_video_comment_replies as parent_reply",
+            "parent_reply.id",
+            "academy_video_comment_replies.parent_reply_id",
+          )
+          .leftJoin(
+            "users as parent_user",
+            "parent_user.id",
+            "parent_reply.user_id",
+          )
+          .select([
+            "academy_video_comment_replies.id as id",
+            "academy_video_comment_replies.comment_id as commentId",
+            "academy_video_comment_replies.parent_reply_id as parentReplyId",
+            "academy_video_comment_replies.text as text",
+            "academy_video_comment_replies.created_at as createdAt",
+            "users.username as username",
+            "users.first_name as firstName",
+            "users.last_name as lastName",
+            "parent_user.username as parentUsername",
+            "parent_user.first_name as parentFirstName",
+            "parent_user.last_name as parentLastName",
+          ])
+          .where("academy_video_comment_replies.comment_id", "in", commentIds)
+          .orderBy("academy_video_comment_replies.created_at", "asc")
+          .orderBy("academy_video_comment_replies.id", "asc")
+          .execute()
+      : Promise.resolve([]),
+  ]);
+  const replyIds = replyRows.map((reply) => reply.id);
+  const replyReactionRows = replyIds.length
+    ? await db
+        .selectFrom("academy_video_comment_reply_reactions")
+        .select(["reply_id", "reaction"])
+        .where("reply_id", "in", replyIds)
+        .execute()
+    : [];
+  const commentReactions = new Map<
+    number,
+    { likes: number; dislikes: number; viewer: "like" | "dislike" | null }
+  >();
+  for (const row of reactionRows) {
+    const summary = commentReactions.get(row.comment_id) ?? {
+      likes: 0,
+      dislikes: 0,
+      viewer: null,
+    };
+    if (row.reaction === "like") summary.likes += 1;
+    if (row.reaction === "dislike") summary.dislikes += 1;
+    commentReactions.set(row.comment_id, summary);
+  }
+  if (viewerId && commentIds.length) {
+    const viewerRows = await db
+      .selectFrom("academy_video_comment_reactions")
+      .select(["comment_id", "reaction"])
+      .where("user_id", "=", viewerId)
+      .where("comment_id", "in", commentIds)
+      .execute();
+    for (const row of viewerRows)
+      commentReactions.get(row.comment_id)!.viewer = row.reaction;
+  }
+  const replyReactions = new Map<
+    number,
+    { likes: number; dislikes: number; viewer: "like" | "dislike" | null }
+  >();
+  for (const row of replyReactionRows) {
+    const summary = replyReactions.get(row.reply_id) ?? {
+      likes: 0,
+      dislikes: 0,
+      viewer: null,
+    };
+    if (row.reaction === "like") summary.likes += 1;
+    if (row.reaction === "dislike") summary.dislikes += 1;
+    replyReactions.set(row.reply_id, summary);
+  }
+  if (viewerId && replyIds.length) {
+    const viewerRows = await db
+      .selectFrom("academy_video_comment_reply_reactions")
+      .select(["reply_id", "reaction"])
+      .where("user_id", "=", viewerId)
+      .where("reply_id", "in", replyIds)
+      .execute();
+    for (const row of viewerRows)
+      replyReactions.get(row.reply_id)!.viewer = row.reaction;
+  }
+  const repliesByComment = new Map<number, VideoCommentReply[]>();
+  for (const reply of replyRows) {
     const authorName =
-      [comment.firstName, comment.lastName]
+      [reply.firstName, reply.lastName]
         .map((part) => part?.trim())
         .filter(Boolean)
         .join(" ") ||
-      comment.username?.trim() ||
+      reply.username?.trim() ||
       "Aluno";
-    const initials =
-      authorName
-        .split(/\s+/)
-        .slice(0, 2)
-        .map((part) => part[0]?.toUpperCase())
-        .join("") || "A";
+    const replyToAuthorName = reply.parentReplyId
+      ? [reply.parentFirstName, reply.parentLastName]
+          .map((part) => part?.trim())
+          .filter(Boolean)
+          .join(" ") ||
+        reply.parentUsername?.trim() ||
+        null
+      : null;
+    const reaction = replyReactions.get(reply.id) ?? {
+      likes: 0,
+      dislikes: 0,
+      viewer: null,
+    };
+    const entries = repliesByComment.get(reply.commentId) ?? [];
+    entries.push({
+      id: reply.id,
+      commentId: reply.commentId,
+      parentReplyId: reply.parentReplyId,
+      authorName: decodeLegacyText(authorName),
+      authorInitials: initialsFrom(authorName),
+      replyToAuthorName: replyToAuthorName
+        ? decodeLegacyText(replyToAuthorName)
+        : null,
+      text: decodeLegacyText(reply.text),
+      publishedLabel: formatPublishedAt(
+        Math.floor(reply.createdAt.getTime() / 1000),
+      ),
+      likesCount: reaction.likes,
+      dislikesCount: reaction.dislikes,
+      viewerReaction: reaction.viewer,
+    });
+    repliesByComment.set(reply.commentId, entries);
+  }
 
-    return [
-      {
-        id: comment.id,
-        authorName: decodeLegacyText(authorName),
-        authorInitials: initials,
-        text,
-        publishedLabel: formatPublishedAt(comment.time),
-        likesLabel: formatViews(comment.likes)
-          .replace("visualizações", "likes")
-          .replace("visualização", "like"),
-      },
-    ];
+  return {
+    comments: pageRows.flatMap((comment) => {
+      const text = decodeLegacyText(comment.text?.trim() ?? "");
+      if (!text) return [];
+
+      const authorName =
+        [comment.firstName, comment.lastName]
+          .map((part) => part?.trim())
+          .filter(Boolean)
+          .join(" ") ||
+        comment.username?.trim() ||
+        "Aluno";
+      const initials =
+        authorName
+          .split(/\s+/)
+          .slice(0, 2)
+          .map((part) => part[0]?.toUpperCase())
+          .join("") || "A";
+
+      return [
+        {
+          id: comment.id,
+          authorName: decodeLegacyText(authorName),
+          authorInitials: initials,
+          text,
+          publishedLabel: formatPublishedAt(comment.time),
+          likesLabel: `${commentReactions.get(comment.id)?.likes ?? 0} likes`,
+          likesCount: commentReactions.get(comment.id)?.likes ?? 0,
+          dislikesCount: commentReactions.get(comment.id)?.dislikes ?? 0,
+          viewerReaction: commentReactions.get(comment.id)?.viewer ?? null,
+          isPinned: comment.pinned === 1,
+          isHidden: comment.hidden === 1,
+          replies: repliesByComment.get(comment.id) ?? [],
+        },
+      ];
     }),
     nextCursor:
       hasNextPage && pageRows.length > 0
@@ -989,6 +1186,7 @@ export async function getVideoWatchPage(
   categorySlug: string,
   vimeoId: string,
   viewerId?: number,
+  includeHidden = false,
 ): Promise<VideoWatchPage | null> {
   const categoryRow = await getDb()
     .selectFrom("academy_categories")
@@ -1072,7 +1270,7 @@ export async function getVideoWatchPage(
       viewerId
         ? getVideoReactionSummary({ videoId: videoRow.id, userId: viewerId })
         : Promise.resolve({ likesCount: 0, viewerReaction: null }),
-      listVideoCommentsPage({ videoId: videoRow.id }),
+      listVideoCommentsPage({ videoId: videoRow.id, viewerId, includeHidden }),
       listVideoSubcategories(videoRow.id, category.id),
     ]);
 

@@ -729,95 +729,102 @@ model user_ads {
 }
 
 model users {
-  id                    Int     @id @default(autoincrement())
-  username              String  @default("") @db.VarChar(255)
-  codigorca             String  @default("") @db.VarChar(32)
-  email                 String  @default("") @db.VarChar(255)
-  ip_address            String  @default("") @db.VarChar(150)
-  password              String? @default("") @db.VarChar(255)
-  must_change_password  Boolean @default(false)
-  first_name            String  @default("") @db.VarChar(50)
-  last_name             String  @default("") @db.VarChar(50)
-  gender                String  @default("male") @db.VarChar(10)
-  email_code            String  @default("") @db.VarChar(50)
-  device_id             String  @default("") @db.VarChar(200)
-  language              String  @default("english") @db.VarChar(22)
-  avatar                String  @default("upload/photos/d-avatar.jpg") @db.VarChar(100)
-  cover                 String  @default("upload/photos/d-cover.jpg") @db.VarChar(100)
-  src                   String  @default("") @db.VarChar(22)
-  country_id            Int     @default(0)
-  age                   Int     @default(0)
-  about                 String? @db.Text
-  google                String  @default("") @db.VarChar(50)
-  facebook              String  @default("") @db.VarChar(50)
-  twitter               String  @default("") @db.VarChar(50)
-  instagram             String  @default("") @db.VarChar(100)
-  active                Int     @default(1)
-  admin                 Int     @default(0)
-  verified              Int     @default(0)
-  last_active           Int     @default(0)
-  registered            String  @default("0000/00") @db.VarChar(40)
-  time                  Int     @default(0)
-  is_pro                Int     @default(0)
-  pro_type              Int     @default(0)
-  imports               Int     @default(0)
-  uploads               Int     @default(0)
-  wallet                Float   @default(0) @db.Float
-  balance               String  @default("0") @db.VarChar(100)
-  video_mon             Int     @default(0)
-  age_changed           Int     @default(0)
-  academy_video_progress academy_video_progress[]
-  academy_video_reactions academy_video_reactions[]
-  donation_paypal_email String  @default("") @db.VarChar(100)
-  user_upload_limit     String  @default("0") @db.VarChar(50)
-  two_factor            Int     @default(0)
-  google_secret         String  @default("") @db.VarChar(100)
-  authy_id              String  @default("") @db.VarChar(100)
-  two_factor_method     String  @default("") @db.VarChar(50)
-  last_month            String? @db.Text
-  active_time           Int     @default(0)
-  active_expire         String  @default("0") @db.VarChar(100)
-  phone_number          String  @default("") @db.VarChar(50)
-  subscriber_price      String  @default("0") @db.VarChar(11)
-  monetization          Int     @default(0)
-  new_email             String  @default("") @db.VarChar(50)
-  fav_category          String  @default("") @db.VarChar(400)
-  total_ads             Float   @default(0) @db.Float
-  suspend_upload        Int     @default(0)
-  suspend_import        Int     @default(0)
-  paystack_ref          String  @default("") @db.VarChar(100)
-  ConversationId        String  @default("") @db.VarChar(50)
-  point_day_expire      Int     @default(0)
-  points                Float   @default(0) @db.Float
-  daily_points          Int     @default(0)
-  converted_points      Float   @default(0) @db.Float
-  info_file             String  @default("") @db.VarChar(300)
-  google_tracking_code  String  @default("") @db.VarChar(100)
-  newsletters           Int     @default(0)
-  vk                    String  @default("") @db.VarChar(18)
-  qq                    String  @default("") @db.VarChar(18)
-  wechat                String  @default("") @db.VarChar(18)
-  discord               String  @default("") @db.VarChar(18)
-  mailru                String  @default("") @db.VarChar(18)
-  linkedIn              String  @default("") @db.VarChar(18)
-  pause_history         Int     @default(0)
-  tv_code               String  @default("") @db.VarChar(10)
-  permission            String? @db.VarChar(3000)
-  referrer              Int     @default(0)
-  ref_user_id           Int     @default(0)
-  ref_type              String  @default("") @db.VarChar(50)
-  privacy               String  @default("{\"show_subscriptions_count\":\"yes\",\"who_can_message_me\":\"all\",\"who_can_watch_my_videos\":\"all\"}") @db.VarChar(500)
-  is_hashed             Boolean @default(false)
-  NOMERCA               String  @default("0") @db.VarChar(50)
-  CODIGOSV              Decimal @default(0) @db.Decimal(4, 0)
-  NOMESV                String  @default("0") @db.VarChar(50)
-  CODIGOCV              Decimal @default(0) @db.Decimal(4, 0)
-  MODELO                String  @default("0") @db.VarChar(120)
-  FAIXA                 String  @default("0") @db.VarChar(14)
-  SENHA                 String  @default("0") @db.VarChar(255)
-  FUNCAO                String  @default("0") @db.VarChar(13)
-  NOMECV                String? @default("0") @db.VarChar(50)
-  CODMOD                Int?    @default(0)
+  id                                     Int                                     @id @default(autoincrement())
+  username                               String                                  @default("") @db.VarChar(255)
+  codigorca                              String                                  @default("") @db.VarChar(32)
+  email                                  String                                  @default("") @db.VarChar(255)
+  ip_address                             String                                  @default("") @db.VarChar(150)
+  password                               String?                                 @default("") @db.VarChar(255)
+  must_change_password                   Boolean                                 @default(false)
+  first_name                             String                                  @default("") @db.VarChar(50)
+  last_name                              String                                  @default("") @db.VarChar(50)
+  gender                                 String                                  @default("male") @db.VarChar(10)
+  email_code                             String                                  @default("") @db.VarChar(50)
+  device_id                              String                                  @default("") @db.VarChar(200)
+  language                               String                                  @default("english") @db.VarChar(22)
+  avatar                                 String                                  @default("upload/photos/d-avatar.jpg") @db.VarChar(100)
+  cover                                  String                                  @default("upload/photos/d-cover.jpg") @db.VarChar(100)
+  src                                    String                                  @default("") @db.VarChar(22)
+  country_id                             Int                                     @default(0)
+  age                                    Int                                     @default(0)
+  about                                  String?                                 @db.Text
+  google                                 String                                  @default("") @db.VarChar(50)
+  facebook                               String                                  @default("") @db.VarChar(50)
+  twitter                                String                                  @default("") @db.VarChar(50)
+  instagram                              String                                  @default("") @db.VarChar(100)
+  active                                 Int                                     @default(1)
+  admin                                  Int                                     @default(0)
+  verified                               Int                                     @default(0)
+  last_active                            Int                                     @default(0)
+  registered                             String                                  @default("0000/00") @db.VarChar(40)
+  time                                   Int                                     @default(0)
+  is_pro                                 Int                                     @default(0)
+  pro_type                               Int                                     @default(0)
+  imports                                Int                                     @default(0)
+  uploads                                Int                                     @default(0)
+  wallet                                 Float                                   @default(0) @db.Float
+  balance                                String                                  @default("0") @db.VarChar(100)
+  video_mon                              Int                                     @default(0)
+  age_changed                            Int                                     @default(0)
+  academy_video_progress                 academy_video_progress[]
+  academy_video_reactions                academy_video_reactions[]
+  academy_video_comment_reactions        academy_video_comment_reactions[]
+  academy_video_comment_reply_reactions  academy_video_comment_reply_reactions[]
+  academy_video_comment_replies          academy_video_comment_replies[]
+  academy_video_comment_pins             academy_video_comment_pins[]
+  academy_video_comment_post_rate_limits academy_video_comment_post_rate_limits?
+  academy_video_comment_hidden_by        academy_video_comment_moderation[]      @relation("AcademyCommentHiddenBy")
+  academy_video_comment_restored_by      academy_video_comment_moderation[]      @relation("AcademyCommentRestoredBy")
+  donation_paypal_email                  String                                  @default("") @db.VarChar(100)
+  user_upload_limit                      String                                  @default("0") @db.VarChar(50)
+  two_factor                             Int                                     @default(0)
+  google_secret                          String                                  @default("") @db.VarChar(100)
+  authy_id                               String                                  @default("") @db.VarChar(100)
+  two_factor_method                      String                                  @default("") @db.VarChar(50)
+  last_month                             String?                                 @db.Text
+  active_time                            Int                                     @default(0)
+  active_expire                          String                                  @default("0") @db.VarChar(100)
+  phone_number                           String                                  @default("") @db.VarChar(50)
+  subscriber_price                       String                                  @default("0") @db.VarChar(11)
+  monetization                           Int                                     @default(0)
+  new_email                              String                                  @default("") @db.VarChar(50)
+  fav_category                           String                                  @default("") @db.VarChar(400)
+  total_ads                              Float                                   @default(0) @db.Float
+  suspend_upload                         Int                                     @default(0)
+  suspend_import                         Int                                     @default(0)
+  paystack_ref                           String                                  @default("") @db.VarChar(100)
+  ConversationId                         String                                  @default("") @db.VarChar(50)
+  point_day_expire                       Int                                     @default(0)
+  points                                 Float                                   @default(0) @db.Float
+  daily_points                           Int                                     @default(0)
+  converted_points                       Float                                   @default(0) @db.Float
+  info_file                              String                                  @default("") @db.VarChar(300)
+  google_tracking_code                   String                                  @default("") @db.VarChar(100)
+  newsletters                            Int                                     @default(0)
+  vk                                     String                                  @default("") @db.VarChar(18)
+  qq                                     String                                  @default("") @db.VarChar(18)
+  wechat                                 String                                  @default("") @db.VarChar(18)
+  discord                                String                                  @default("") @db.VarChar(18)
+  mailru                                 String                                  @default("") @db.VarChar(18)
+  linkedIn                               String                                  @default("") @db.VarChar(18)
+  pause_history                          Int                                     @default(0)
+  tv_code                                String                                  @default("") @db.VarChar(10)
+  permission                             String?                                 @db.VarChar(3000)
+  referrer                               Int                                     @default(0)
+  ref_user_id                            Int                                     @default(0)
+  ref_type                               String                                  @default("") @db.VarChar(50)
+  privacy                                String                                  @default("{\"show_subscriptions_count\":\"yes\",\"who_can_message_me\":\"all\",\"who_can_watch_my_videos\":\"all\"}") @db.VarChar(500)
+  is_hashed                              Boolean                                 @default(false)
+  NOMERCA                                String                                  @default("0") @db.VarChar(50)
+  CODIGOSV                               Decimal                                 @default(0) @db.Decimal(4, 0)
+  NOMESV                                 String                                  @default("0") @db.VarChar(50)
+  CODIGOCV                               Decimal                                 @default(0) @db.Decimal(4, 0)
+  MODELO                                 String                                  @default("0") @db.VarChar(120)
+  FAIXA                                  String                                  @default("0") @db.VarChar(14)
+  SENHA                                  String                                  @default("0") @db.VarChar(255)
+  FUNCAO                                 String                                  @default("0") @db.VarChar(13)
+  NOMECV                                 String?                                 @default("0") @db.VarChar(50)
+  CODMOD                                 Int?                                    @default(0)
 
   @@index([active], map: "active")
   @@index([active_time], map: "active_time")
@@ -1024,17 +1031,17 @@ model videos {
 
 // Analytics retain scalar identities deliberately: deleting an account/video must not cascade into history.
 model academy_video_watch_sessions {
-  id               String @id @db.VarChar(36)
+  id               String  @id @db.VarChar(36)
   user_id          Int
   video_id         Int
-  status           String @default("active") @db.VarChar(12)
+  status           String  @default("active") @db.VarChar(12)
   started_at_ms    BigInt
   last_seen_at_ms  BigInt
   expires_at_ms    BigInt
   ended_at_ms      BigInt?
-  last_sequence   Int @default(0)
-  watched_ms       Int @default(0)
-  accepted_buckets String @db.LongText
+  last_sequence    Int     @default(0)
+  watched_ms       Int     @default(0)
+  accepted_buckets String  @db.LongText
 
   @@index([user_id, status, last_seen_at_ms], map: "watch_sessions_user_active_idx")
   @@index([video_id, started_at_ms], map: "watch_sessions_video_started_idx")
@@ -1093,6 +1100,80 @@ model academy_video_reactions {
 
   @@id([user_id, video_id])
   @@index([video_id, reaction], map: "academy_video_reactions_video_reaction_idx")
+}
+
+model academy_video_comment_reactions {
+  user_id    Int
+  comment_id Int
+  reaction   String   @db.VarChar(8)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt @db.DateTime(0)
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, comment_id])
+  @@index([comment_id, reaction], map: "academy_comment_reactions_comment_reaction_idx")
+}
+
+model academy_video_comment_reply_reactions {
+  user_id    Int
+  reply_id   Int
+  reaction   String   @db.VarChar(8)
+  created_at DateTime @default(now()) @db.DateTime(0)
+  updated_at DateTime @updatedAt @db.DateTime(0)
+  user       users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@id([user_id, reply_id])
+  @@index([reply_id, reaction], map: "academy_comment_reply_reactions_reply_reaction_idx")
+}
+
+model academy_video_comment_replies {
+  id              Int      @id @default(autoincrement())
+  legacy_reply_id Int?     @unique
+  comment_id      Int
+  parent_reply_id Int?
+  user_id         Int
+  video_id        Int
+  text            String   @db.Text
+  created_at      DateTime @default(now()) @db.DateTime(0)
+  user            users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+
+  @@index([comment_id, created_at, id], map: "academy_comment_replies_comment_created_idx")
+  @@index([parent_reply_id], map: "academy_comment_replies_parent_idx")
+  @@index([video_id], map: "academy_comment_replies_video_idx")
+}
+
+model academy_video_comment_pins {
+  video_id          Int      @id
+  comment_id        Int      @unique
+  pinned_by_user_id Int?
+  pinned_at         DateTime @default(now()) @db.DateTime(0)
+  updated_at        DateTime @updatedAt @db.DateTime(0)
+  pinned_by         users?   @relation(fields: [pinned_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([comment_id], map: "academy_comment_pins_comment_idx")
+}
+
+model academy_video_comment_post_rate_limits {
+  user_id           Int      @id
+  window_started_at DateTime @db.DateTime(0)
+  post_count        Int      @default(0) @db.UnsignedTinyInt
+  updated_at        DateTime @updatedAt @db.DateTime(0)
+  user              users    @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model academy_video_comment_moderation {
+  comment_id          Int       @id
+  video_id            Int
+  is_hidden           Boolean   @default(false)
+  hidden_at           DateTime? @db.DateTime(0)
+  hidden_by_user_id   Int?
+  restored_at         DateTime? @db.DateTime(0)
+  restored_by_user_id Int?
+  updated_at          DateTime  @updatedAt @db.DateTime(0)
+  hidden_by           users?    @relation("AcademyCommentHiddenBy", fields: [hidden_by_user_id], references: [id], onDelete: SetNull)
+  restored_by         users?    @relation("AcademyCommentRestoredBy", fields: [restored_by_user_id], references: [id], onDelete: SetNull)
+
+  @@index([video_id, is_hidden], map: "academy_comment_moderation_video_hidden_idx")
 }
 
 model academy_categories {

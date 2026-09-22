@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import { getCurrentUser } from "@/lib/auth/session";
 import {
+  CommentPostLimitError,
   createVideoComment,
   isPublicVideo,
 } from "@/lib/home/video-comments";
@@ -26,7 +27,10 @@ const commentsPageSchema = z
   .refine(
     ({ cursorPinned, cursorTime, cursorId }) => {
       const values = [cursorPinned, cursorTime, cursorId];
-      return values.every((value) => value === undefined) || values.every((value) => value !== undefined);
+      return (
+        values.every((value) => value === undefined) ||
+        values.every((value) => value !== undefined)
+      );
     },
     { message: "O cursor dos comentários é inválido." },
   );
@@ -66,7 +70,12 @@ export async function GET(request: Request) {
           id: parsed.data.cursorId,
         };
   return Response.json(
-    await listVideoCommentsPage({ videoId: parsed.data.videoId, cursor }),
+    await listVideoCommentsPage({
+      videoId: parsed.data.videoId,
+      cursor,
+      viewerId: Number(user.id),
+      includeHidden: user.isStudioAdmin,
+    }),
   );
 }
 
@@ -89,11 +98,18 @@ export async function POST(request: Request) {
     );
   }
 
-  const comment = await createVideoComment({
-    userId: Number(user.id),
-    authorName: user.name,
-    ...parsed.data,
-  });
+  let comment;
+  try {
+    comment = await createVideoComment({
+      userId: Number(user.id),
+      authorName: user.name,
+      ...parsed.data,
+    });
+  } catch (error) {
+    if (error instanceof CommentPostLimitError)
+      return Response.json({ message: error.message }, { status: 429 });
+    throw error;
+  }
   if (!comment) {
     return Response.json(
       { message: "O comentário ou vídeo informado é inválido." },

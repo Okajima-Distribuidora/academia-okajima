@@ -239,10 +239,7 @@ export function VideoWatchContent({
               autoPlay={autoPlay}
               onEnded={() => {
                 if (!autoPlayEnabled || !nextVideo) return;
-                navigateToVideo(
-                  videoWatchHref(page.category, nextVideo),
-                  true,
-                );
+                navigateToVideo(videoWatchHref(page.category, nextVideo), true);
               }}
             />
 
@@ -296,6 +293,7 @@ export function VideoWatchContent({
           <VideoComments
             videoId={page.video.id}
             viewerInitials={viewerInitials}
+            isStudioAdmin={isStudioAdmin}
             initialComments={page.comments}
             initialNextCursor={page.commentsNextCursor}
           />
