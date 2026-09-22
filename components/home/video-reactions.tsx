@@ -1,6 +1,11 @@
 "use client";
 
-import { IconThumbDown, IconThumbUp } from "@tabler/icons-react";
+import {
+  IconThumbDown,
+  IconThumbDownFilled,
+  IconThumbUp,
+  IconThumbUpFilled,
+} from "@tabler/icons-react";
 import { useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -16,7 +21,18 @@ import {
 import { cn } from "@/lib/utils";
 
 function formatLikes(count: number) {
-  return `${new Intl.NumberFormat("pt-BR").format(count)} ${count === 1 ? "like" : "likes"}`;
+  const units = [
+    { value: 1_000_000_000, suffix: "bi" },
+    { value: 1_000_000, suffix: "mi" },
+    { value: 1_000, suffix: "mil" },
+  ];
+  const unit = units.find(({ value }) => count >= value);
+  if (!unit) return new Intl.NumberFormat("pt-BR").format(count);
+
+  const abbreviated = count / unit.value;
+  return `${new Intl.NumberFormat("pt-BR", {
+    maximumFractionDigits: 1,
+  }).format(abbreviated)} ${unit.suffix}`;
 }
 
 export function VideoReactions({
@@ -83,7 +99,11 @@ export function VideoReactions({
         disabled={isSaving}
         onClick={() => submitReaction("like")}
       >
-        <IconThumbUp data-icon="inline-start" aria-hidden="true" />
+        {reaction === "like" ? (
+          <IconThumbUpFilled data-icon="inline-start" aria-hidden="true" />
+        ) : (
+          <IconThumbUp data-icon="inline-start" aria-hidden="true" />
+        )}
         {formatLikes(likesCount)}
       </Button>
       <ButtonGroupSeparator />
@@ -100,7 +120,11 @@ export function VideoReactions({
         disabled={isSaving}
         onClick={() => submitReaction("dislike")}
       >
-        <IconThumbDown aria-hidden="true" />
+        {reaction === "dislike" ? (
+          <IconThumbDownFilled aria-hidden="true" />
+        ) : (
+          <IconThumbDown aria-hidden="true" />
+        )}
       </Button>
     </ButtonGroup>
   );

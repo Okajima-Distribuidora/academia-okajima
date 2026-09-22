@@ -1012,6 +1012,10 @@ html.lenis body {
   min-height: 2.75rem;
   box-shadow: none;
 }
+.watch-reaction-group [data-slot="button"] svg {
+  width: 1.25rem;
+  height: 1.25rem;
+}
 .watch-reaction-like {
   padding-inline: 1rem;
 }
